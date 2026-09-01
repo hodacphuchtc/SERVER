@@ -9,6 +9,8 @@
  * Transport được tiêm vào để test chạy trọn vòng đời mà không cần tài khoản Resend.
  */
 
+import { themNutTiepNhan } from "./ky-link.js";
+
 export type ThuCanGui = {
   khoa_idempotency: string;
   nguoi_nhan: string[];
@@ -75,7 +77,15 @@ export type BanGhiOutbox = {
   nguoi_nhan: string[];
   tieu_de: string;
   than_thu: string;
+  /** Id các cảnh báo thư này gộp — nguồn để dựng nút "Đã tiếp nhận". */
+  canh_bao_ids?: string[] | null;
 };
+
+/**
+ * Cấu hình nút "Đã tiếp nhận". Không truyền thì thư gửi đi không có nút — dùng cho digest
+ * và email tuần, vốn không gắn với một cảnh báo cụ thể nào.
+ */
+export type CauHinhNutAck = { goc: string; khoa: string };
 
 export type KetQuaXuLy = { da_gui: number; that_bai: number; chi_tiet: KetQuaGui[] };
 
@@ -91,6 +101,7 @@ export async function xuLyOutbox(
   danhDauDaGui: (id: string, ma: string | undefined) => Promise<void>,
   ghiLoi: (id: string, loi: string) => Promise<void>,
   transport: Transport,
+  nutAck?: CauHinhNutAck,
 ): Promise<KetQuaXuLy> {
   const ds = await layChuaGui();
   const chiTiet: KetQuaGui[] = [];
@@ -98,11 +109,17 @@ export async function xuLyOutbox(
   let thatBai = 0;
 
   for (const bg of ds) {
+    // Gắn nút "Đã tiếp nhận" ngay trước khi gửi. Làm ở đây chứ không làm trong SQL vì
+    // khoá ký HMAC tuyệt đối không được nằm trong cơ sở dữ liệu.
+    const than = nutAck && bg.canh_bao_ids?.length
+      ? themNutTiepNhan(bg.than_thu, bg.canh_bao_ids, nutAck.goc, nutAck.khoa)
+      : bg.than_thu;
+
     const kq = await transport({
       khoa_idempotency: bg.khoa_idempotency,
       nguoi_nhan: bg.nguoi_nhan,
       tieu_de: bg.tieu_de,
-      than_thu: bg.than_thu,
+      than_thu: than,
     });
     chiTiet.push(kq);
     if (kq.ok) {

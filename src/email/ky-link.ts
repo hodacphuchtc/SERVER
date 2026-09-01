@@ -23,3 +23,33 @@ export function chuKyHopLe(canhBaoId: string, chuKy: string, khoa: string): bool
 export function taoLinkTiepNhan(goc: string, canhBaoId: string, khoa: string): string {
   return `${goc}/api/tiep-nhan?id=${canhBaoId}&chu_ky=${kyLink(canhBaoId, khoa)}`;
 }
+
+/**
+ * Gắn nút "Đã tiếp nhận" vào cuối thân thư.
+ *
+ * 🔴 Vì sao hàm này tồn tại: `taoLinkTiepNhan` trước đây CHỈ được gọi trong test — nghĩa
+ * là email cảnh báo chưa bao giờ có nút bấm. Mà cơ chế leo thang lên lãnh đạo sau 30 phút
+ * lại dựa vào việc "chưa ai bấm tiếp nhận". Thiếu nút, mọi sự cố nghiêm trọng đều leo
+ * thang sau đúng 30 phút dù người trực đang xử lý — và người ta sẽ học cách bỏ qua email.
+ *
+ * Hàm THUẦN: không I/O, không đọc env. Khoá và địa chỉ gốc do người gọi truyền vào.
+ */
+export function themNutTiepNhan(
+  thanThu: string,
+  canhBaoIds: readonly string[],
+  goc: string,
+  khoa: string,
+): string {
+  if (canhBaoIds.length === 0) return thanThu;
+
+  const dong = canhBaoIds.map((id, i) =>
+    canhBaoIds.length === 1
+      ? `Đã xử lý? Bấm vào đây: ${taoLinkTiepNhan(goc, id, khoa)}`
+      : `${i + 1}. ${taoLinkTiepNhan(goc, id, khoa)}`);
+
+  const dau = canhBaoIds.length === 1
+    ? ""
+    : "Đã xử lý việc nào thì bấm link tương ứng (theo đúng thứ tự bên trên):\n";
+
+  return `${thanThu}\n\n${dau}${dong.join("\n")}`;
+}

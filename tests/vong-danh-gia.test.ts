@@ -69,7 +69,11 @@ describe("vòng đánh giá — nối các mảnh thành hệ thống", () => {
     expect(daGui).toHaveLength(1);
     expect(daGui[0]!.nguoi_nhan).toEqual(["quan_tri"]);
     expect(daGui[0]!.than_thu).toMatch(/máy chủ kế toán/);
-    expect(daGui[0]!.than_thu).toMatch(/cpu_phan_tram/);
+    // SỬA 01/09/2026 (hạng mục 1.2) — trước đây đòi mã kỹ thuật `cpu_phan_tram` xuất hiện
+    // trong thư. Nay engine sinh câu tiếng Việt kèm cả hệ quả nếu không xử lý.
+    expect(daGui[0]!.than_thu).toMatch(/Bộ xử lý đang chạy ở mức/);
+    expect(daGui[0]!.than_thu).toMatch(/Nếu không xử lý:/);
+    expect(daGui[0]!.than_thu).not.toMatch(/cpu_phan_tram/);
   });
 
   it("ỨC CHẾ XUYÊN BƯỚC: máy mất liên lạc VÀ CPU cao → chỉ báo mất liên lạc", async () => {
@@ -86,8 +90,9 @@ describe("vòng đánh giá — nối các mảnh thành hệ thống", () => {
     await vong(MOC);
 
     expect(daGui).toHaveLength(1);
-    expect(daGui[0]!.than_thu).toMatch(/mat_lien_lac/);
+    expect(daGui[0]!.than_thu).toMatch(/ngừng gửi số liệu/);
     expect(daGui[0]!.than_thu).not.toMatch(/cpu_phan_tram/);
+    expect(daGui[0]!.than_thu).not.toMatch(/mat_lien_lac/);
   });
 
   it("CHẠY LẶP khi tình hình không đổi: vòng 2 và 3 KHÔNG sinh thêm email nào", async () => {
@@ -176,7 +181,17 @@ describe("vòng đánh giá — nối các mảnh thành hệ thống", () => {
 
     expect(t.cong_viec.mo).toBe(1);
     expect(daGui).toHaveLength(1);
-    expect(daGui[0]!.than_thu).toMatch(/cong_viec:backup-ke-toan/);
+
+    // SỬA 01/09/2026 (hạng mục 1.1) — test này TRƯỚC ĐÂY đòi thân thư chứa mã kỹ thuật
+    // `cong_viec:backup-ke-toan`. Đó chính là thứ phải bỏ: người trực đọc email lúc 2 giờ
+    // sáng cần một câu tiếng Việt, không cần tên khoá trong cơ sở dữ liệu.
+    const than = daGui[0]!.than_thu;
+    expect(than).toMatch(/sao lưu dữ liệu kế toán/);
+    expect(than).toMatch(/Nếu không xử lý:/);
+    expect(than).toMatch(/Cần làm:/);
+    // 🔴 Yêu cầu thật của hạng mục: KHÔNG một mã snake_case nào lọt ra người đọc.
+    expect(than).not.toMatch(/cong_viec:/);
+    expect(than).not.toMatch(/[a-z]+_[a-z]+/);
   });
 
   it("tóm tắt một dòng nêu rõ khi gửi email THẤT BẠI, không im lặng", async () => {

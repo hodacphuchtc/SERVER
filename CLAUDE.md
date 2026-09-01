@@ -62,16 +62,17 @@ Quyết định kiến trúc: `docs/decisions/ADR-*`. Stack: Next.js (App Router
 
 ### ĐANG DỞ
 
-- Không có mục nào dở giữa chừng. 12 mục `[~]` trong PLAN.md đã xong phần code + test,
-  chỉ chờ tài khoản/máy thật để nghiệm thu — mỗi mục ghi rõ "CHỜ: ..." tại chỗ.
+- **PLAN_V2.md** (lộ trình MVP mới, duyệt 01/09/2026): xong GĐ0 trọn vẹn (4/4) và
+  GĐ1 hạng mục 1.1 + 1.2. Còn 1.3 (luật tương quan), 1.4 (từ điển), 1.5 (điểm sức khỏe),
+  rồi GĐ2–GĐ5. Toàn bộ test xanh sau mỗi hạng mục.
 
 ### BƯỚC TIẾP THEO (theo thứ tự)
 
-1. **Bật Secret Scanning + Push Protection** trên GitHub (repo đang PUBLIC). Hook
-   pre-commit chỉ chặn ở máy này, không chặn ai commit từ máy khác.
-2. **GĐ1 — Uptime Kuma** (1 ngày, chữa đúng cơn đau "nhân viên kêu mới biết").
-   ⛔ Cần: danh sách URL nội bộ · tài khoản SMTP · quyền chạy Docker.
-3. Mở tài khoản Cloudflare + Resend + Supabase để nghiệm thu nốt 12 mục `[~]`.
+1. **PLAN_V2 hạng mục 1.3** — luật tương quan: gộp "đĩa đầy + swap cao + RAM cạn + tải cao
+   trong khi CPU rảnh" thành MỘT nguyên nhân gốc. Máy thật hiện đẻ 3 cảnh báo cho cùng
+   một sự cố — đã đo được, xem mục CẢNH BÁO.
+2. **1.4 từ điển hiển thị** và **1.5 điểm sức khỏe**.
+3. **GĐ2 — dashboard** (7 hạng mục).
 
 ### CHỜ NGOÀI (thiếu key/env/dịch vụ — ghi vào đây rồi làm tiếp, đừng dừng)
 

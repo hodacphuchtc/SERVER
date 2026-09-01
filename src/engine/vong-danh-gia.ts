@@ -12,6 +12,7 @@
 import type { PGlite } from "@electric-sql/pglite";
 import {
   xuLyOutbox,
+  type CauHinhNutAck,
   type BanGhiOutbox,
   type Transport,
 } from "../email/gui-email";
@@ -22,6 +23,18 @@ export type TuyChonVong = {
   chiSo?: string[];
   imLangPhut?: number;
   transport: Transport;
+  /**
+   * Bật nút "Đã tiếp nhận" trong thư. Không truyền thì thư không có nút — và khi đó cơ chế
+   * leo thang 30 phút sẽ bắn với MỌI sự cố nghiêm trọng, kể cả khi có người đang xử lý.
+   * Cần `goc` (địa chỉ gốc của trang) và `khoa` (khoá ký HMAC, lấy từ biến môi trường).
+   */
+  nutAck?: CauHinhNutAck;
+  /**
+   * Ngưỡng dự báo đầy đĩa (số NGÀY còn lại). Không truyền thì bước dự báo bị bỏ qua —
+   * giữ tuỳ chọn để các test cũ không phải khai thêm gì.
+   * Nguồn sự thật: config/nguong-canh-bao.json → phanCung.diaDuBaoDayNgay.
+   */
+  duBaoDia?: { canhCaoNgay: number; nghiemTrongNgay: number; cuaSoNgay?: number };
 };
 
 export type TomTatVong = {
@@ -31,6 +44,7 @@ export type TomTatVong = {
   dich_vu: { mo: number; dong: number };
   cong_viec: { mo: number; dong: number };
   csdl: { mo: number; dong: number };
+  du_bao_dia: { mo: number; dong: number };
   thong_bao: { loai: string | null; so_canh_bao: number };
   leo_thang: number;
   email: { da_gui: number; that_bai: number };
@@ -97,6 +111,19 @@ export async function chayMotVong(db: PGlite, tuyChon: TuyChonVong): Promise<Tom
     `select hanh_dong from public.ghi_canh_bao_csdl($1::timestamptz)`, [moc],
   );
 
+  // ── 5b. Dự báo đầy đĩa. Phải chạy TRƯỚC bước gom nhóm để đi chung một thư với các
+  // cảnh báo khác — nếu không, "ổ sắp đầy trong 6 ngày" thành một email riêng lẻ.
+  //
+  // Trước đây du_bao_day_dia() viết xong, có test, chạy đúng, và KHÔNG AI GỌI. Ngưỡng
+  // 14/7 ngày khai trong config cũng không có dòng nào so sánh. Đây là mối nối bị thiếu.
+  const duBao = tuyChon.duBaoDia
+    ? await db.query<CoHanhDong>(
+        `select hanh_dong from public.ghi_canh_bao_du_bao_dia($1, $2, $3, $4::timestamptz)`,
+        [tuyChon.duBaoDia.canhCaoNgay, tuyChon.duBaoDia.nghiemTrongNgay,
+         tuyChon.duBaoDia.cuaSoNgay ?? 7, moc],
+      )
+    : { rows: [] as CoHanhDong[] };
+
   // ── 6. Gom nhóm + ức chế + giới hạn tốc độ + cầu dao → ghi vào outbox.
   const thongBao = await db.query<{ loai: string; so_canh_bao: number }>(
     `select loai, so_canh_bao from public.soan_thong_bao($1::timestamptz)`, [moc],
@@ -111,7 +138,7 @@ export async function chayMotVong(db: PGlite, tuyChon: TuyChonVong): Promise<Tom
   const ketQuaEmail = await xuLyOutbox(
     async () => {
       const r = await db.query<BanGhiOutbox>(
-        `select id, khoa_idempotency, nguoi_nhan, tieu_de, than_thu
+        `select id, khoa_idempotency, nguoi_nhan, tieu_de, than_thu, canh_bao_ids
            from public.alert_notifications
           where gui_luc is null
           order by tao_luc`,
@@ -131,6 +158,7 @@ export async function chayMotVong(db: PGlite, tuyChon: TuyChonVong): Promise<Tom
       await db.query(`update public.alert_notifications set loi = $2 where id = $1`, [id, loi]);
     },
     tuyChon.transport,
+    tuyChon.nutAck,
   );
 
   return {
@@ -140,6 +168,7 @@ export async function chayMotVong(db: PGlite, tuyChon: TuyChonVong): Promise<Tom
     dich_vu: dem(dichVu.rows),
     cong_viec: dem(congViec.rows),
     csdl: dem(csdl.rows),
+    du_bao_dia: dem(duBao.rows),
     thong_bao: {
       loai: thongBao.rows[0]?.loai ?? null,
       so_canh_bao: thongBao.rows[0]?.so_canh_bao ?? 0,
@@ -151,8 +180,8 @@ export async function chayMotVong(db: PGlite, tuyChon: TuyChonVong): Promise<Tom
 
 /** Một dòng log gọn cho Worker — đọc là biết vòng vừa rồi có làm gì không. */
 export function tomTatMotDong(t: TomTatVong): string {
-  const mo = t.mat_lien_lac.mo + t.nguong.mo + t.dich_vu.mo + t.cong_viec.mo + t.csdl.mo;
-  const dong = t.mat_lien_lac.dong + t.nguong.dong + t.dich_vu.dong + t.cong_viec.dong + t.csdl.dong;
+  const mo = t.mat_lien_lac.mo + t.nguong.mo + t.dich_vu.mo + t.cong_viec.mo + t.csdl.mo + t.du_bao_dia.mo;
+  const dong = t.mat_lien_lac.dong + t.nguong.dong + t.dich_vu.dong + t.cong_viec.dong + t.csdl.dong + t.du_bao_dia.dong;
   if (mo === 0 && dong === 0 && t.email.da_gui === 0 && t.email.that_bai === 0) {
     return `${t.luc} · không có gì thay đổi`;
   }
