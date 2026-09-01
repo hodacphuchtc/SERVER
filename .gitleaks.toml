@@ -1,0 +1,67 @@
+# .gitleaks.toml — luật soi khóa RIÊNG của Sata Robo, NỐI THÊM vào bộ luật mặc định.
+# Vì sao có file này: bộ mặc định của gitleaks không biết REPORT_LINK_SECRET là gì,
+# không biết service_role JWT nguy hiểm hơn anon JWT. Ngày 03/08/2026 repo từng PUBLIC
+# 6 ngày — file này là danh sách "khóa nào của TA, trông ra sao".
+# Miễn trừ TỪNG PHÁT HIỆN bằng fingerprint trong .gitleaksignore kèm lý do + ngày,
+# KHÔNG nới regex ở đây. File này nằm trong REQUIRED_FILES của check:structure —
+# xóa là CI đỏ.
+
+[extend]
+useDefault = true
+
+# ── Supabase ──────────────────────────────────────────────────────────────
+[[rules]]
+id = "sata-supabase-jwt"
+description = "JWT Supabase (service_role bỏ qua RLS = lộ TOÀN BỘ DB, kể cả dữ liệu trẻ em)"
+# Bắt MỌI JWT 3 khúc; anon key nếu cố ý nằm trong tài liệu thì miễn trừ bằng fingerprint.
+regex = '''eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}'''
+keywords = ["eyJ"]
+
+[[rules]]
+id = "sata-supabase-secret-key-moi"
+description = "Supabase secret key định dạng mới"
+regex = '''sb_secret_[A-Za-z0-9_-]{20,}'''
+keywords = ["sb_secret_"]
+
+# ── Nhà cung cấp ngoài ───────────────────────────────────────────────────
+[[rules]]
+id = "sata-anthropic-key"
+description = "Anthropic API key"
+regex = '''sk-ant-[A-Za-z0-9_\-]{24,}'''
+keywords = ["sk-ant-"]
+
+[[rules]]
+id = "sata-apify-token"
+description = "Apify API token"
+regex = '''apify_api_[A-Za-z0-9]{30,}'''
+keywords = ["apify_api_"]
+
+[[rules]]
+id = "sata-meta-token"
+description = "Meta/Facebook token (long-lived bắt đầu bằng EAA)"
+regex = '''EAA[A-Za-z0-9]{40,}'''
+keywords = ["EAA"]
+
+# ── Bí mật TỰ ĐẶT của dự án (bộ mặc định KHÔNG thể biết) ─────────────────
+[[rules]]
+id = "sata-bien-bi-mat-noi-bo"
+description = "Gán GIÁ TRỊ thật cho biến bí mật nội bộ (đọc process.env thì không sao)"
+regex = '''(?i)(REPORT_LINK_SECRET|INTEGRATION_ENCRYPTION_KEY|CRON_SECRET|LEAD_INTAKE_API_KEY|META_APP_SECRET|META_VERIFY_TOKEN|NEW_USER_PASSWORD)\s*[=:]\s*["']?[A-Za-z0-9+/=_\-]{16,}'''
+keywords = [
+  "REPORT_LINK_SECRET",
+  "INTEGRATION_ENCRYPTION_KEY",
+  "CRON_SECRET",
+  "LEAD_INTAKE_API_KEY",
+  "META_APP_SECRET",
+  "META_VERIFY_TOKEN",
+  "NEW_USER_PASSWORD",
+]
+
+[allowlist]
+description = "Chỗ được nói TÊN biến chứ không phải GIÁ TRỊ"
+paths = ['''\.env\.example$''', '''package-lock\.json$''']
+regexes = [
+  # Mã nguồn ĐỌC biến — không phải giá trị. Thiếu dòng này thì 34 chỗ
+  # process.env.SUPABASE_SERVICE_ROLE_KEY báo oan — hàng rào báo oan là hàng rào chết.
+  '''process\.env\.[A-Z_]+''',
+]

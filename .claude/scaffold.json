@@ -1,0 +1,39 @@
+{
+  "requiredDirs": [
+    "docs/brd",
+    "docs/architecture",
+    "docs/decisions",
+    "docs/sop",
+    "config",
+    "scripts",
+    "tests",
+    ".claude/rules",
+    ".claude/agents",
+    ".claude/skills",
+    ".claude/commands",
+    ".githooks"
+  ],
+  "requiredFiles": [
+    "CLAUDE.md",
+    "PLAN.md",
+    "README.md",
+    ".claude/settings.json",
+    "docs/architecture/env-vars.md",
+    "scripts/check-structure.mjs",
+    ".gitignore",
+    ".gitleaks.toml",
+    ".env.example",
+    ".githooks/pre-commit",
+    "docs/sop/SU-CO-LO-KEY.md",
+    ".claude/commands/B1_y_tuong.md",
+    ".claude/commands/B2_lo_trinh.md",
+    ".claude/commands/B3_thi_cong.md",
+    ".claude/commands/B4_nghiem_thu.md",
+    ".claude/commands/B5_luu_code.md",
+    ".claude/commands/B6_trien_khai.md",
+    ".claude/commands/B6_xuat_ban.md",
+    ".claude/commands/reset_db.md"
+  ],
+  "modules": [],
+  "adrCount": 3
+}

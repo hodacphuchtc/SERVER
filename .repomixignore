@@ -1,0 +1,39 @@
+# .repomixignore — repomix đọc từ ĐĨA (không phải từ git), nên phải chặn CẢ những thứ đã
+# gitignore: file cấu hình có host/IP máy chủ thật, log giám sát, dump metric vẫn nằm trên
+# đĩa. Thiếu file này thì một lệnh nén codebase là toàn bộ topology hạ tầng rời khỏi vòng
+# kiểm soát. Gói nén CHỈ dùng trong máy — không gửi ra dịch vụ ngoài.
+# Dự án lớn lên thì THÊM thư mục nhạy cảm mới vào đây, đừng để mặc định.
+
+# ── Nhạy cảm: danh sách máy chủ thật, thông tin kết nối, log/metric ──
+.env*
+*.pem
+*.key
+secrets/
+config/hosts*
+config/servers*
+config/*-prod*
+logs/
+data/
+snapshots/
+*.csv
+*.sql
+tests/**/fixtures/
+scripts/fixtures/
+
+# ── Sổ tiến độ — to, đổi mỗi phiên, KHÔNG phải kiến trúc ──
+Plan/
+**/OVERVIEW.md
+CLAUDE.md
+
+# ── Máy sinh / build / rác ──
+node_modules/
+.next/
+out/
+dist/
+coverage/
+test-results/
+playwright-report/
+package-lock.json
+*.tsbuildinfo
+public/
+*.log

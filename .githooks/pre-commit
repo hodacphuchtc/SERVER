@@ -1,0 +1,55 @@
+#!/bin/sh
+# Chặn ngay lúc commit — rẻ hơn nhiều so với chặn lúc push, và rẻ hơn RẤT nhiều so với
+# phải dọn lịch sử git sau khi khóa đã lộ.
+#
+# Nằm trong `.githooks/` chứ không phải `.git/hooks/` để nó ĐƯỢC THEO DÕI trong repo:
+# hook trong `.git/hooks` không đi theo bản clone, nên máy mới là mất hàng rào mà không ai
+# biết. Bật bằng:  git config core.hooksPath .githooks
+#
+# Bỏ qua một lần khi thật sự cần:  git commit --no-verify
+
+set -e
+
+echo "› gitleaks (khóa/token trong phần đã stage)…"
+# FAIL-CLOSED có cửa thoát HỮU DANH: nếu thiếu binary mà chỉ cảnh báo rồi exit 0 thì hàng
+# rào tự tắt đúng lúc cần nó nhất ("thoái hoá âm thầm"). Nay: thiếu là CHẶN; kẹt thật một
+# lần thì CHO_QUA_GITLEAKS=1 (grep được trong lịch sử shell, khác --no-verify vô danh).
+GITLEAKS_BIN="$(command -v gitleaks || true)"
+[ -z "$GITLEAKS_BIN" ] && [ -x "$HOME/.local/bin/gitleaks" ] && GITLEAKS_BIN="$HOME/.local/bin/gitleaks"
+if [ -n "$GITLEAKS_BIN" ]; then
+  "$GITLEAKS_BIN" protect --staged --no-banner --redact --config .gitleaks.toml
+elif [ "${CHO_QUA_GITLEAKS:-0}" = "1" ]; then
+  echo "  ⚠️  KHÔNG có gitleaks mà vẫn commit (CHO_QUA_GITLEAKS=1) — CI sẽ soi lại."
+else
+  echo "  🔴 CHƯA CÀI gitleaks — CHẶN commit. Khóa lọt vào lịch sử git là phải xoay khóa"
+  echo "     và viết lại lịch sử; chặn ở đây rẻ hơn nhiều."
+  echo "     Cài:  brew install gitleaks   (hoặc binary về ~/.local/bin)"
+  echo "     Kẹt một lần thật sự:  CHO_QUA_GITLEAKS=1 git commit …"
+  exit 1
+fi
+
+# Các cửa dưới đây CHỈ chạy khi dự án đã khai script tương ứng trong package.json.
+# Cố ý viết có điều kiện: dự án lúc scaffold chưa có package.json, mà hook `set -e` gọi
+# thẳng `npm run` sẽ chặn đứng commit đầu tiên — hàng rào biến thành cái khoá cửa.
+co_script () { # $1 = tên script npm
+  [ -f package.json ] || return 1
+  node -e 'const s=require("./package.json").scripts||{};process.exit(s[process.argv[1]]?0:1)' "$1" 2>/dev/null
+}
+
+if co_script check:pii; then
+  echo "› check:pii (dữ liệu cá nhân trong tài liệu và file dữ liệu)…"
+  npm run --silent check:pii
+fi
+
+# Tiến độ: chặn commit mang theo bảng tiến độ LỆCH số thật.
+#
+# Vì sao ở cửa COMMIT chứ không nhắc miệng "nhớ chạy plan:tien-do": bảng % là thứ người
+# ngoài đọc để ra quyết định, mà quên cập nhật thì nó vẫn hiển thị một con số trông hoàn
+# toàn bình thường — chỉ là của tuần trước. Không có dòng lỗi nào, không ai phát hiện.
+# Hàng rào này ĐỌC-THÔI (không tự sửa file rồi stage sau lưng người commit).
+if co_script check:plan; then
+  echo "› check:plan (tiến độ dự án khớp số thật)…"
+  npm run --silent check:plan
+fi
+
+echo "✅ Qua cửa pre-commit."

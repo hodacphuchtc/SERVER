@@ -1,0 +1,40 @@
+# Secrets — TUYỆT ĐỐI không đẩy lên Git
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+.dev.vars
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build / cache
+.next/
+out/
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+
+# Vercel
+.vercel/
+
+# Supabase (local Docker — không commit dữ liệu/khối lượng lớn)
+.supabase/
+supabase/.branches/
+supabase/.temp/
+
+# Logs & OS
+logs/
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Test / coverage
+coverage/
+.nyc_output/
