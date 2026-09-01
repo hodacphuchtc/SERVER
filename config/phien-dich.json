@@ -1,0 +1,45 @@
+{
+  "_ghiChu": "Cấu hình LỚP PHIÊN DỊCH. Ranh giới cố ý: HẰNG SỐ ở JSON, SỐ HỌC ở TypeScript. Nhét điều kiện luật vào JSON thì không typecheck được, không test được, và sẽ thành một ngôn ngữ lập trình thứ hai không ai bảo trì nổi. Muốn thêm luật thì sửa src/phien-dich/luat-tuong-quan.ts và viết test.",
+
+  "nguongTuongQuan": {
+    "_ghiChu": "Ngưỡng dùng trong ĐIỀU KIỆN của luật tương quan. Khác với config/nguong-canh-bao.json (ngưỡng sinh cảnh báo) — ở đây là ngưỡng để nhận DẠNG một tình huống.",
+    "taiMoiNhan": 0.4,
+    "cpuRanhToiThieuDeCoiLaNghenIO": 60,
+    "ramTrongToiThieuPhanTram": 3,
+    "diaPhanTramCoiLaDay": 95,
+    "vungBoNhoAoChiemGB": 5,
+    "tienTrinhSotCpuToiThieu": 20,
+    "tienTrinhSotPhutToiThieu": 30,
+    "soDichVuLoiCanhCao": 3,
+    "pinPhanTramCanhCao": 40,
+    "pinConPhutCanhCao": 120,
+    "choTroiChoCapNhatGB": 20,
+    "soThreadTyLeTranCanhCao": 0.6
+  },
+
+  "tienTrinhTamThoi": [
+    "chrome-headless-shell", "headless_shell", "chromedriver", "next-server",
+    "playwright", "puppeteer", "geckodriver"
+  ],
+
+  "congChoPhepRaNgoai": [5000, 7000, 49152, 22, 88, 445],
+  "_congChoPhepRaNgoai": "5000/7000 = AirPlay, 49152 = Handoff, 88 = Kerberos, 445 = chia sẻ tệp — đều là dịch vụ macOS chuẩn. Cổng khác mà bind ra toàn mạng thì đáng hỏi.",
+
+  "luatTuongQuan": {
+    "_ghiChu": "uuTien cao thắng. gopHanhDongVaoGoc = luật THUA vẫn góp việc cần làm vào nguyên nhân gốc — một gốc để BÁO, nhiều đòn bẩy để LÀM.",
+    "dia-day-keo-sup-bo-nho":   { "bat": true, "uuTien": 100, "gopHanhDongVaoGoc": false },
+    "doc-nguoc-lien-tuc":       { "bat": true, "uuTien": 95,  "gopHanhDongVaoGoc": true  },
+    "bo-nho-thieu-that":        { "bat": true, "uuTien": 90,  "gopHanhDongVaoGoc": true  },
+    "tien-trinh-sot":           { "bat": true, "uuTien": 80,  "gopHanhDongVaoGoc": true  },
+    "nghen-nhap-xuat":          { "bat": true, "uuTien": 75,  "gopHanhDongVaoGoc": false },
+    "may-chu-chay-bang-pin":    { "bat": true, "uuTien": 70,  "gopHanhDongVaoGoc": false },
+    "cong-mo-ra-mang-ngoai":    { "bat": true, "uuTien": 60,  "gopHanhDongVaoGoc": false },
+    "dich-vu-he-thong-lap-lai": { "bat": true, "uuTien": 50,  "gopHanhDongVaoGoc": false },
+    "khong-du-cho-cap-nhat":    { "bat": true, "uuTien": 45,  "gopHanhDongVaoGoc": false }
+  },
+
+  "tuGiamSat": {
+    "_ghiChu": "Lớp tương quan có thể biến thành lớp GIẤU cảnh báo — kiểu hỏng tệ nhất vì nó im lặng và trông rất gọn gàng. Vượt tỷ lệ này thì hệ thống tự cảnh báo về CHÍNH NÓ, cùng tinh thần với trần 5 cảnh báo/tuần.",
+    "tyLeGopToiDa": 0.7
+  }
+}
