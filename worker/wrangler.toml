@@ -1,0 +1,21 @@
+# Cloudflare Worker — đồng hồ cảnh báo (ADR-003).
+#
+# KHÔNG đặt giá trị bí mật trong file này (nó nằm trong git). Đặt bằng:
+#   wrangler secret put SUPABASE_URL
+#   wrangler secret put SUPABASE_ANON_KEY
+#   wrangler secret put RESEND_API_KEY
+#   wrangler secret put EMAIL_NGUOI_GUI
+#   wrangler secret put HOP_THU_QUAN_TRI
+#   wrangler secret put HOP_THU_LANH_DAO
+
+name = "giam-sat-dong-ho"
+main = "index.ts"
+compatibility_date = "2026-09-01"
+
+[triggers]
+# Nhịp 1 phút — mức nhỏ nhất Cloudflare cho phép, và đủ nhanh cho cảnh báo sự cố.
+# Đây là lý do KHÔNG dùng GitHub Actions: lịch của nó trễ 5–15 phút vào giờ cao điểm.
+crons = ["* * * * *"]
+
+[observability]
+enabled = true

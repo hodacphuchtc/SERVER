@@ -121,7 +121,7 @@ Windows lẫn máy Mac** chảy vào mỗi phút. Sau đó bạn tắt collector
   - (d) 1 ngày.
   - (e) chặn: NGƯỜI — cần quyền cài phần mềm trên máy Mac.
 
-- [ ] 🔴 **2.2 — SPIKE: chứng minh Cloudflare Worker gói miễn phí chạy nổi vòng đánh giá**
+- [~] 🔴 **2.2 — SPIKE: chứng minh Cloudflare Worker gói miễn phí chạy nổi vòng đánh giá** *(dở — dừng ở: `worker/index.ts` + `wrangler.toml` + 6 test đã xong. Worker KHÔNG chứa logic đánh giá, chỉ gọi lần lượt hàm SQL rồi gửi mail — đúng cách lách trần 10ms CPU. Test khẳng định TRÌNH TỰ gọi và khẳng định một bước hỏng không làm chết cả vòng. CHỜ: tài khoản Cloudflare để deploy và đo CPU time thật)*
   - (a) Gói free giới hạn **10ms CPU mỗi lần gọi**. Dựng một Worker thử: cron 1 phút → gọi
     một hàm RPC Postgres đánh giá ngưỡng cho 6 máy × 40 chỉ số → đo `wall time` và CPU
     time trong log. Nếu vượt 10ms CPU thì đẩy thêm phần tính toán xuống SQL (thời gian chờ
@@ -386,6 +386,43 @@ nhỏ hơn 70% so với trung bình 7 ngày"*.
     chỉ số đang chọn.
   - (d) 1,5 ngày.
   - (e) chặn: MÁY.
+
+---
+
+## GIAI ĐOẠN 7 — Nối các mảnh thành hệ thống (ước lượng: 2 ngày)
+
+> **Vì sao có giai đoạn này.** Sau GĐ 1–6, mọi bộ phận đều xong và đều có test xanh, nhưng
+> `grep` cho thấy KHÔNG file nguồn nào gọi chúng theo trình tự. Đó là kiểu hỏng nguy hiểm
+> nhất của một hệ giám sát: mọi phép kiểm xanh và hệ thống im lặng tuyệt đối.
+
+**DEMO kết thúc GĐ:** chạy `npm test` thấy kịch bản nối hai đầu xanh — ép CPU một máy →
+đúng MỘT email; chạy vòng lặp lại 3 lần → vẫn đúng một email, không đẻ thêm.
+
+- [x] **7.1 — Vòng đánh giá** ✅ (01/09/2026)
+  - (a) `src/engine/vong-danh-gia.ts` chạy trọn chu kỳ 8 bước theo đúng trình tự bắt buộc;
+    `supabase/migrations/0011` biến kết quả soát backup/CSDL thành cảnh báo (trước đó chúng
+    chỉ báo cáo rồi rơi vào hư không); tiêm `p_bay_gio` vào mọi hàm để cả engine nhìn cùng
+    một mốc thời gian.
+  - (b) Bạn chạy `npm test` thấy 8 kịch bản của `tests/vong-danh-gia.test.ts` xanh.
+  - (c) `tests/vong-danh-gia.test.ts` — kiểm ức chế xuyên bước, chạy lặp không đẻ email,
+    transport hỏng thì thư ở lại outbox và vòng sau gửi đúng một lần.
+  - (d) 1 ngày.
+
+- [x] **7.2 — Cloudflare Worker + route tiếp nhận sự cố** ✅ (01/09/2026)
+  - (a) `worker/index.ts` + `worker/wrangler.toml` (cron 1 phút); `src/email/ky-link.ts` ký
+    HMAC cho link "Đã tiếp nhận"; `src/app/api/tiep-nhan/route.ts` xử lý cú bấm.
+  - (b) Mở URL của Worker chạy một vòng ngay không cần chờ cron; bấm link trong email thấy
+    trang xác nhận tiếng Việt.
+  - (c) `tests/worker.test.ts` (6) + `tests/ky-link.test.ts` (5) — khẳng định trình tự gọi,
+    một bước hỏng không giết cả vòng, và không bấm hộ được cảnh báo khác dù biết id.
+  - (d) 0,5 ngày.
+
+- [x] **7.3 — SOP vận hành + tài liệu môi trường** ✅ (01/09/2026)
+  - (a) `docs/sop/SU-CO-GIAM-SAT.md` viết cho người KHÔNG xây hệ thống (BRD §8.4 bắt buộc
+    trước bàn giao); `.env.example` và `README.md` viết lại đúng thực tế dự án.
+  - (b) Bạn đọc SOP và làm theo được mà không cần hỏi ai.
+  - (c) (tài liệu — không có test tự động.)
+  - (d) 0,5 ngày.
 
 ---
 

@@ -41,8 +41,8 @@ begin
     left join nhip_cuoi n on n.id = d.host_id
   ),
   mo as (
-    insert into public.alerts (host_id, chi_so, muc, gia_tri)
-    select g.id, 'dich_vu:' || g.ten_dich_vu, 'nghiem_trong', null
+    insert into public.alerts (host_id, chi_so, muc, gia_tri, bat_dau_luc)
+    select g.id, 'dich_vu:' || g.ten_dich_vu, 'nghiem_trong', null, p_bay_gio
     from danh_gia g where g.dang_thieu
     on conflict (host_id, chi_so, muc) where ket_thuc_luc is null do nothing
     returning alerts.host_id as id_mo, alerts.chi_so as chi_so_mo

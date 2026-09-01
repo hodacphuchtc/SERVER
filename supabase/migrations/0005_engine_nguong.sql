@@ -105,9 +105,10 @@ begin
     where h.dang_theo_doi
   ),
   mo as (
-    insert into public.alerts (host_id, chi_so, muc, gia_tri, nguong)
+    insert into public.alerts (host_id, chi_so, muc, gia_tri, nguong, bat_dau_luc)
     select q.id, p_chi_so, q.muc_can_co, q.gia_tri_moi_nhat,
-           case q.muc_can_co when 'nghiem_trong' then v_cfg.nghiem_trong else v_cfg.canh_cao end
+           case q.muc_can_co when 'nghiem_trong' then v_cfg.nghiem_trong else v_cfg.canh_cao end,
+           p_bay_gio
     from quyet_dinh q
     where q.muc_can_co is not null and q.muc_dang_mo is distinct from q.muc_can_co
     on conflict (host_id, chi_so, muc) where ket_thuc_luc is null do nothing
