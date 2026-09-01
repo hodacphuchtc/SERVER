@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": [
+      "node"
+    ],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noEmit": true
+  },
+  "include": [
+    "src/**/*",
+    "tests/**/*",
+    "collector/**/*"
+  ],
+  "_ghiChu": "scripts/plan-phu-thuoc.ts CỐ Ý nằm ngoài: đó là tiện ích do skill khoi-tao-du-an chép sẵn, đọc dòng (f) phụ-thuộc mà PLAN.md dự án này không dùng, và cần tsx chưa cài. Không phải mã của dự án — đừng đưa vào typecheck rồi đi sửa nó."
+}
