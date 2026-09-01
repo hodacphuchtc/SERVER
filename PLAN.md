@@ -256,7 +256,7 @@ lãnh đạo. Ép tiếp 2 máy nữa cùng lúc → vẫn chỉ **một** email
 Bạn tạo một file backup rỗng thay cho file thật → nhận cảnh báo *"bản sao lưu bất thường,
 nhỏ hơn 70% so với trung bình 7 ngày"*.
 
-- [ ] **4.1 — Dịch vụ và tiến trình bắt buộc luôn chạy**
+- [~] **4.1 — Dịch vụ và tiến trình bắt buộc luôn chạy** *(dở — dừng ở: bảng khai + `soat_dich_vu()` + 5 test đã xong, dùng tên dễ hiểu ("phần mềm kế toán") thay tên kỹ thuật. CHỜ: bạn liệt kê dịch vụ nào bắt buộc trên máy nào)*
   - (a) Khai trong `config/dich-vu-bat-buoc.json` danh sách dịch vụ theo từng máy. Collector
     đọc `Win32_Service` (lọc `State='Stopped' AND StartMode='Auto'`) trên Windows và danh
     sách tiến trình trên macOS, đẩy kèm dòng metric. Engine bắn cảnh báo ngay khi thiếu.
@@ -267,7 +267,7 @@ nhỏ hơn 70% so với trung bình 7 ngày"*.
   - (d) 1 ngày.
   - (e) chặn: NGƯỜI — cần bạn liệt kê dịch vụ nào là bắt buộc trên máy nào.
 
-- [ ] **4.2 — Sao lưu: dead-man's switch + phát hiện bản sao lưu rỗng**
+- [~] **4.2 — Sao lưu: dead-man's switch + phát hiện bản sao lưu rỗng** *(dở — dừng ở: `ghi_nhan_chay()` + `soat_cong_viec()` + 9 test đã xong, bắt được cả ca "chạy thành công nhưng file gần rỗng". CHỜ: sửa script backup thêm dòng ping)*
   - (a) Nâng cấp phần Push của GĐ1 vào hệ thống chính: script backup ping kèm **kích thước
     file**. Engine so với **trung vị 7 ngày**, lệch quá ±30% thì cảnh cáo, quá ±60% thì
     nghiêm trọng. Đây là bẫy phổ biến nhất: script thoát mã 0 nhưng file 0 byte, và không
@@ -279,7 +279,7 @@ nhỏ hơn 70% so với trung bình 7 ngày"*.
   - (d) 1 ngày.
   - (e) chặn: NGƯỜI — cần sửa script backup để thêm dòng ping (bạn hoặc IT làm).
 
-- [ ] **4.3 — Job định kỳ khác + cơ sở dữ liệu ở mức cơ bản**
+- [~] **4.3 — Job định kỳ khác + cơ sở dữ liệu ở mức cơ bản** *(dở — dừng ở: `soat_csdl()` + 5 test đã xong, số liệu cũ quá 10 phút báo KHÔNG ĐO ĐƯỢC chứ không báo bình thường. CHỜ: tài khoản kết nối CSDL chỉ đọc)*
   - (a) Cùng cơ chế Push cho các scheduled task / cron quan trọng. Với CSDL: đo kết nối
     được không, số kết nối đang mở, dung lượng. **Không** làm phân tích truy vấn chậm ở
     phiên bản này.
