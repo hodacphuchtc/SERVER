@@ -133,7 +133,7 @@ describe("cửa duy nhất của lãnh đạo — tom_tat_cho_lanh_dao", () => {
 
   const tomTat = async (id: string | null) => {
     await db.exec(`select set_config('app.nguoi_dung_id', '${id ?? ""}', false);`);
-    return (await db.query<{ so_may: number; so_su_co_dang_mo: number; cau_ket_luan: string }>(
+    return (await db.query<{ so_may: number; so_may_binh_thuong: number; so_su_co_dang_mo: number; cau_ket_luan: string }>(
       `select * from public.tom_tat_cho_lanh_dao()`)).rows[0]!;
   };
 
