@@ -210,7 +210,7 @@ lãnh đạo. Ép tiếp 2 máy nữa cùng lúc → vẫn chỉ **một** email
     vượt 3 phút = 0 cảnh báo · vượt 6 phút = 1 · nhấp nháy quanh ngưỡng 10 lần = 1.
   - (d) 1,5 ngày.
 
-- [ ] 🔴 **3.3 — Gom nhóm, ức chế, giới hạn tốc độ, cầu dao**
+- [x] 🔴 **3.3 — Gom nhóm, ức chế, giới hạn tốc độ, cầu dao** ✅ (01/09/2026)
   - (a) **Gom nhóm:** nhiều cảnh báo trong 60 giây → một email có bảng. **Ức chế:** máy đã
     "mất liên lạc" thì chặn toàn bộ cảnh báo con của máy đó (đừng báo "CPU cao" cho một
     máy vừa mất điện); cảnh báo nghiêm trọng chặn cảnh báo cảnh cáo cùng máy.
@@ -223,9 +223,8 @@ lãnh đạo. Ép tiếp 2 máy nữa cùng lúc → vẫn chỉ **một** email
   - (c) `tests/gom-nhom.test.ts`, `tests/uc-che.test.ts`, `tests/cau-dao.test.ts` — mỗi test
     đưa vào một chùm cảnh báo và khẳng định **số email sinh ra**, không phải số cảnh báo.
   - (d) 1 ngày.
-  - (e) chặn: MÁY.
 
-- [ ] **3.4 — Gửi email qua Resend + hàng đợi outbox + phân tầng người nhận**
+- [~] **3.4 — Gửi email qua Resend + hàng đợi outbox + phân tầng người nhận** *(dở — dừng ở: outbox + leo thang phân tầng đã xong và có test; phần gọi HTTP API của Resend chờ tài khoản + tên miền)*
   - (a) Ghi vào bảng `alert_notifications` trước, Worker gửi sau (**outbox** — chống gửi
     trùng khi function timeout giữa chừng), có khoá idempotency
     `hash(máy + chỉ số + mức)`. Gọi **HTTP API của Resend, KHÔNG dùng SMTP**: Vercel/Worker
@@ -242,13 +241,12 @@ lãnh đạo. Ép tiếp 2 máy nữa cùng lúc → vẫn chỉ **một** email
   - (e) chặn: NGOÀI — cần tài khoản Resend + một tên miền để cấu hình SPF/DKIM/DMARC
     (khuyến nghị subdomain riêng `alerts.<tenmien>` để tách uy tín khỏi mail kinh doanh).
 
-- [ ] **3.5 — Ghi nhận xử lý sự cố (ack) và tính MTTR**
+- [x] **3.5 — Ghi nhận xử lý sự cố (ack) và tính MTTR** ✅ (01/09/2026)
   - (a) Mỗi email có nút "Đã tiếp nhận" (link ký số, không cần đăng nhập). Lưu ai bấm, lúc
     nào, khi nào cảnh báo tự tắt → tính thời gian khắc phục trung bình.
   - (b) Bạn bấm nút trong email → mở trang xác nhận, và sự cố đó chuyển sang "đang xử lý".
   - (c) `tests/ack.test.ts` — link hợp lệ ghi nhận đúng; link đã dùng hoặc hết hạn bị từ chối.
   - (d) 0,5 ngày.
-  - (e) chặn: MÁY.
 
 ---
 
@@ -291,7 +289,7 @@ nhỏ hơn 70% so với trung bình 7 ngày"*.
   - (e) chặn: NGƯỜI — cần thông tin kết nối CSDL (tài khoản chỉ đọc, không dùng tài khoản
     quản trị).
 
-- [ ] **4.4 — Dự báo ngày đầy đĩa**
+- [x] **4.4 — Dự báo ngày đầy đĩa** ✅ (01/09/2026)
   - (a) Hồi quy tuyến tính trên 7 ngày dung lượng đĩa → ước lượng số ngày còn lại. Cảnh báo
     khi **dự báo đầy dưới 7 ngày**, kèm câu tiếng Việt *"Máy chủ kế toán sắp hết chỗ lưu —
     khoảng 6 ngày nữa"*. Hữu ích hơn ngưỡng tĩnh rất nhiều: nó biến giám sát thành phòng
@@ -301,7 +299,6 @@ nhỏ hơn 70% so với trung bình 7 ngày"*.
   - (c) `tests/du-bao-day-dia.test.ts` — chuỗi dung lượng tăng đều 1 GB/ngày, đĩa còn 6 GB:
     khẳng định dự báo trả về 6 ngày ±1.
   - (d) 1 ngày.
-  - (e) chặn: MÁY.
 
 ---
 
