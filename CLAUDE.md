@@ -50,42 +50,42 @@ Quyết định kiến trúc: `docs/decisions/ADR-*`. Stack: Next.js (App Router
 
 ### ĐÃ XONG
 
-- **GĐ0 (01/09/2026)** — khung dự án + tài liệu yêu cầu:
-  - 0.1 Bộ khung chuẩn (skill `khoi-tao-du-an`).
-  - 0.2 BRD `docs/brd/giam-sat-he-thong.md` (317 dòng).
-  - 0.3 ADR-001/002/003 · `tech-defaults.md` (stack chốt) · `config/nguong-canh-bao.json` ·
-    viết lại `.claude/rules/workflow.md` cho đúng dự án này · PLAN.md có đủ GĐ1–6.
+- **GĐ0** khung + BRD + 3 ADR + nền test (PGlite).
+- **GĐ2–6 phần MÁY**: thu thập 2 nền tảng · lưu trữ 3 tầng · engine ngưỡng có
+  duration/hysteresis · chống nhiễu (gom nhóm, ức chế, giới hạn, cầu dao) · leo thang phân
+  tầng · ack/MTTR · dự báo đầy đĩa · giám sát dịch vụ/backup/CSDL · email cho lãnh đạo ·
+  phân quyền 3 vai chặn ở RLS · giao diện 3 trang.
+- **GĐ7** vòng đánh giá nối các mảnh · Cloudflare Worker · route tiếp nhận · SOP vận hành ·
+  đo và giám sát THẬT máy đang chạy.
+- **191 test xanh**, typecheck + build exit 0. Đã push `cac5ab2` lên
+  https://github.com/hodacphuchtc/SERVER.
 
 ### ĐANG DỞ
 
-- Chưa có hạng mục nào đang dở.
+- Không có mục nào dở giữa chừng. 12 mục `[~]` trong PLAN.md đã xong phần code + test,
+  chỉ chờ tài khoản/máy thật để nghiệm thu — mỗi mục ghi rõ "CHỜ: ..." tại chỗ.
 
 ### BƯỚC TIẾP THEO (theo thứ tự)
 
-1. **GĐ1 — cầm máu bằng Uptime Kuma** (1 ngày). ⛔ Đang chặn: cần danh sách URL nội bộ,
-   tài khoản SMTP, và quyền chạy Docker trên một máy nội bộ.
-2. **GĐ2.3 — schema DB + token mỗi máy + RLS** (làm được ngay, không chờ ai).
-3. GĐ2.1/2.2 — hai spike rủi ro cao (macOS metrics, Cloudflare Worker 10ms CPU).
+1. **Bật Secret Scanning + Push Protection** trên GitHub (repo đang PUBLIC). Hook
+   pre-commit chỉ chặn ở máy này, không chặn ai commit từ máy khác.
+2. **GĐ1 — Uptime Kuma** (1 ngày, chữa đúng cơn đau "nhân viên kêu mới biết").
+   ⛔ Cần: danh sách URL nội bộ · tài khoản SMTP · quyền chạy Docker.
+3. Mở tài khoản Cloudflare + Resend + Supabase để nghiệm thu nốt 12 mục `[~]`.
 
 ### CHỜ NGOÀI (thiếu key/env/dịch vụ — ghi vào đây rồi làm tiếp, đừng dừng)
 
 Bảy thứ đang chặn, xếp theo mức độ chặn nhiều hạng mục nhất:
 
-1. **Danh sách URL/dịch vụ nội bộ cần theo dõi + một tài khoản SMTP** — để Uptime Kuma gửi
-   mail. *Chặn: GĐ1 toàn bộ (hạng mục 1.1).*
-2. **Quyền chạy Docker trên một máy nội bộ** — nơi đặt Uptime Kuma. *Chặn: 1.1, 1.2.*
-3. **Quyền cài phần mềm trên máy Mac và máy Windows** — để cài `node_exporter` và
-   `windows_exporter`. *Chặn: 2.1, 2.2, 2.4.*
-4. **Thông tin các job backup** (chạy ở đâu, tên script, chu kỳ) — để gắn dead-man's switch.
-   *Chặn: 1.2, 4.2.*
-5. **Danh sách dịch vụ bắt buộc luôn chạy trên từng máy** + **tên nghiệp vụ cho từng máy**
-   ("máy chủ kế toán" thay vì "SRV-01"). *Chặn: 4.1, 5.2.*
-6. **Tài khoản Supabase + Cloudflare + Resend** (đều gói miễn phí) và **một tên miền** để
-   cấu hình SPF/DKIM/DMARC cho subdomain `alerts.<tenmien>`. *Chặn: 2.2, 3.4, 6.1.*
-7. **Tài khoản kết nối CSDL chỉ đọc** — không dùng tài khoản quản trị. *Chặn: 4.3.*
-
-Chưa có 7 thứ trên vẫn làm được: 2.3 (schema + RLS), 3.x (engine viết bằng SQL + test),
-6.2–6.4 (giao diện, chạy với dữ liệu giả).
+1. **Danh sách URL/dịch vụ nội bộ + một tài khoản SMTP** — *chặn 1.1.*
+2. **Quyền chạy Docker trên một máy nội bộ** — *chặn 1.1, 1.2.*
+3. **Quyền cài phần mềm trên máy Mac và Windows** (`node_exporter`, `windows_exporter`) —
+   *chặn 2.1, 2.4.*
+4. **Thông tin các job backup** (chạy ở đâu, tên script, chu kỳ) — *chặn 1.2, 4.2.*
+5. **Danh sách dịch vụ bắt buộc** + **tên nghiệp vụ cho từng máy** — *chặn 4.1, 5.2.*
+6. **Tài khoản Cloudflare + Resend** + **một tên miền** (SPF/DKIM/DMARC cho
+   `alerts.<tenmien>`) — *chặn 2.2, 3.4, 6.1.*
+7. **Tài khoản kết nối CSDL chỉ đọc** — *chặn 4.3.*
 
 ## QUYẾT ĐỊNH QUAN TRỌNG
 
@@ -95,8 +95,32 @@ Chưa có 7 thứ trên vẫn làm được: 2.3 (schema + RLS), 3.x (engine vi�
 | 01/09/2026 | Stack: Next.js (App Router) + TypeScript + Supabase + Vercel | Stack quen thuộc; Supabase Realtime hợp bài toán đẩy số liệu giám sát theo thời gian thực. Chốt chính thức bằng ADR-001 ở hạng mục 0.3 |
 | 01/09/2026 | Kiến trúc ĐƠN KHỐI, không chia `modules/` | Một nghiệp vụ duy nhất (giám sát) — chia module lúc này là chi phí thừa; tách khi xuất hiện nghiệp vụ thứ hai |
 | 01/09/2026 | Chép đủ 8 handle B1→B6 (gồm `reset_db` + 2 handle B6) | Có Supabase là có DB, và sớm muộn sẽ deploy — để sẵn rẻ hơn bổ sung sau |
+| 01/09/2026 | PGlite làm nền test VÀ nguồn dữ liệu cho giao diện | Postgres thật chạy trong Node ⇒ test migration + RLS thật, và `npm run dev` xem được ngay mà không cần Docker lẫn tài khoản Supabase |
+| 01/09/2026 | Chế độ `GIAM_SAT_DO_MAY_NAY=1` đo chính máy đang chạy bằng lệnh macOS | Xem được cả dây chuyền hoạt động trên một máy CÓ THẬT trước khi có tài khoản nào — và chính nó lộ ra 5 lỗi mà fixture không bắt được |
+| 01/09/2026 | Bump `next` 15.1.3 → 15.5.25 | npm cảnh báo CVE-2025-66478 ở bản cũ |
 
 ## CẢNH BÁO / CẠM BẪY (đã trả giá, đừng lặp lại)
 
-- (chưa có — mỗi lần trả giá, ghi 1 dòng: **bài học in đậm** + vì sao, để session sau
-  không lặp lại)
+- 🔴 **ĐỌC EXIT CODE, đừng đọc dòng cuối output.** Mắc 3 lần trong một phiên: `npm run
+  typecheck | tail` rồi `&& echo OK` luôn báo xanh vì `tail` thành công. Có lần đã commit
+  với `typecheck exit=2`. Luôn `cmd >/dev/null 2>&1; echo $?`.
+- 🔴 **KHÔNG chạy `npm install` chồng lên tiến trình đang chạy.** Hai lần khởi động lệnh
+  thứ hai khi lệnh đầu chưa xong ⇒ hai tiến trình giành `node_modules`, `next` bị xoá dở
+  ba lượt, mất ~20 phút. Kiểm `ps aux | grep "[n]pm install"` trước, chạy đúng MỘT lệnh.
+- 🔴 **`new URL(..., import.meta.url)` vỡ dưới webpack của Next** — nó thay lớp `URL` bằng
+  polyfill riêng nên `fileURLToPath` ném `ERR_INVALID_ARG_TYPE` lúc build. Mắc 2 lần
+  (`nap-migration.ts`, `nap-cau-hinh.ts`). Dùng `join(process.cwd(), ...)`.
+  Riêng `.pathname` còn tệ hơn: nó giữ mã hoá phần trăm nên đường dẫn có dấu cách
+  ("VIBE CODE") thành "VIBE%20CODE".
+- 🔴 **CHẠY TRÊN MÁY THẬT LỘ 5 LỖI mà 184 test và toàn bộ fixture không bắt được**: page
+  size 16384 trên Apple Silicon (nhân cứng 4096 là sai gấp 4 lần, và sai theo hướng KHÔNG
+  BAO GIỜ chạm ngưỡng) · phần trăm đĩa APFS lệch 21 điểm so với `df -h` · bộ đếm mạng tích
+  lũy bị trả ra dưới cái tên "mỗi giây" · swap là số thập phân trong cột số nguyên · cảnh
+  báo hiện sai chỉ số ("69,8% nghiêm trọng" trong khi lý do thật là còn 4 GB).
+  **Bài học: fixture chỉ chứng minh code chạy đúng với dữ liệu mình tưởng tượng.**
+- **Test XANH VÌ LÝ DO SAI còn nguy hiểm hơn test đỏ.** Ba test hysteresis từng xanh trong
+  khi ghi đè cùng mốc thời gian, mà `ghi_metric` cố ý `on conflict do nothing` — dữ liệu
+  giai đoạn sau bị bỏ qua âm thầm và test đang kiểm dữ liệu giai đoạn đầu.
+- **Mọi bộ phận xanh không có nghĩa hệ thống chạy.** Trước GĐ7, `grep` cho thấy không file
+  nguồn nào gọi các hàm SQL theo trình tự; `soat_cong_viec()` chỉ trả về vấn đề rồi rơi
+  vào hư không nên backup trễ không bao giờ thành email.

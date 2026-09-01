@@ -1,5 +1,38 @@
 # PLAN.md — Lộ trình GIAM_SAT_SERVER (khởi tạo 01/09/2026)
 
+## BÀN GIAO PHIÊN GẦN NHẤT (01/09/2026 — ghi đè mỗi phiên)
+
+1. **Vừa xong:** GĐ7 trọn vẹn (7.1 vòng đánh giá · 7.2 Worker + route tiếp nhận · 7.3 SOP ·
+   7.4 đo máy thật). 191 test xanh, typecheck/build exit 0. **Đã push** `cac5ab2` lên
+   https://github.com/hodacphuchtc/SERVER (repo PUBLIC — chưa bật Secret Scanning).
+
+2. **Đang dở:** không có mục nào dở giữa chừng. 12 mục `[~]` đều đã xong phần code + test,
+   chỉ chờ tài khoản/máy thật để nghiệm thu — mỗi mục ghi rõ "CHỜ: ..." ngay trong dòng.
+
+3. **Chặn ở NGƯỜI/NGOÀI:** 1.1 + 1.2 cần danh sách URL nội bộ, tài khoản SMTP, quyền chạy
+   Docker, thông tin job backup · 6.1 cần tài khoản Cloudflare · 3.4 cần khoá Resend + tên
+   miền · 4.1–4.3 cần danh sách dịch vụ, sửa script backup, tài khoản CSDL chỉ đọc.
+
+4. **Đã đo, ĐỪNG đo lại:**
+   - Bundle giao diện **103 kB** so với trần 3 MB nén → rủi ro 6.1 coi như đã tháo.
+   - `next@15.1.3` dính CVE-2025-66478; đã lên **15.5.25** (bản vá cuối nhánh 15.x).
+   - PGlite chạy Postgres thật trong Node ⇒ test được migration + RLS mà **không cần Docker
+     lẫn tài khoản Supabase**. Đây là nền của cả 19 file test.
+   - Máy MacBook Air M1 này: ổ còn ~4 GB (chạm ngưỡng nghiêm trọng 10 GB), RAM 84%, swap 5 GB.
+
+5. **Cạm bẫy vừa trả giá** (chi tiết ở mục CẢNH BÁO của `CLAUDE.md`): đọc exit code chứ
+   không đọc dòng cuối output · không chạy `npm install` chồng lên tiến trình đang chạy ·
+   `new URL(..., import.meta.url)` vỡ dưới webpack · **chạy trên máy thật lộ 5 lỗi mà 184
+   test và toàn bộ fixture không bắt được**.
+
+6. **Lệnh phiên sau nên chạy:**
+   ```bash
+   npm test && npm run typecheck        # 191 test, phải xanh trước khi sửa gì
+   GIAM_SAT_DO_MAY_NAY=1 npm run start  # giám sát thật máy này, xem ở localhost:3000
+   ```
+
+---
+
 > **Nguyên tắc đọc file này:** đây là NGUỒN LỘ TRÌNH DUY NHẤT của dự án — không đẻ file kế
 > hoạch riêng; cần mở rộng thì đánh số con ngay tại đây (vd 2.1b, 3B.1). Mỗi Giai đoạn (GĐ)
 > kết thúc bằng một DEMO mà người dùng tự bấm thử được — không nghiệm thu bằng lời "đã viết
@@ -422,6 +455,16 @@ nhỏ hơn 70% so với trung bình 7 ngày"*.
     trước bàn giao); `.env.example` và `README.md` viết lại đúng thực tế dự án.
   - (b) Bạn đọc SOP và làm theo được mà không cần hỏi ai.
   - (c) (tài liệu — không có test tự động.)
+  - (d) 0,5 ngày.
+
+- [x] **7.4 — Đo và giám sát THẬT máy đang chạy ứng dụng** ✅ (01/09/2026)
+  - (a) `collector/doc-macos-truc-tiep.ts` đọc số liệu bằng lệnh macOS có sẵn (không cần
+    `node_exporter`); `src/db/do-lien-tuc.ts` đo lại mỗi 60 giây rồi chạy trọn vòng đánh
+    giá, email in ra terminal thay vì gửi đi.
+  - (b) Bạn chạy `GIAM_SAT_DO_MAY_NAY=1 npm run start` rồi mở http://localhost:3000 —
+    thấy máy mình trong danh sách với số liệu thật, khớp với `df -h` và `uptime`.
+  - (c) `tests/doc-macos.test.ts` (7 test) dùng mẫu THẬT lấy từ máy M1, khẳng định công
+    thức phần trăm đĩa khớp macOS và tên tiến trình bị cắt hết đường dẫn.
   - (d) 0,5 ngày.
 
 ---
