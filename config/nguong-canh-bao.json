@@ -29,6 +29,18 @@
     "csdlSoKetNoiPhanTram":     { "canhCao": 80, "nghiemTrong": 95, "giuTrongPhut": 5 }
   },
 
+  "boNhoMacOS": {
+    "_ghiChu": "Áp lực bộ nhớ macOS: BỐN đường vào 'critical', chỉ cần MỘT đường đúng. Công thức cũ chỉ có đường thứ tư và nó trả 'normal' trên máy đang thrashing thật (đo 01/09/2026: swap 84,8%, bộ nhớ trống 64 MB/8 GB, mà (wired+compressor)/tổng chỉ 58% → dưới ngưỡng 0.6). Nghịch lý: compressor nén càng tốt thì tỷ lệ đó càng TỤT đúng lúc máy khổ nhất.",
+    "ramTrongToiThieuPhanTram": { "canhCao": 10, "nghiemTrong": 3,
+                                  "_huong": "THẤP là xấu — đây là % (free+inactive+speculative)/tổng" },
+    "swapDungTyLe":             { "canhCao": 0.5, "nghiemTrong": 0.8,
+                                  "_huong": "CAO là xấu — used/total của vm.swapusage" },
+    "swapRaMoiGiayByte":        { "canhCao": 1048576, "nghiemTrong": 10485760,
+                                  "_huong": "CAO là xấu — hiệu số Swapouts giữa 2 lần vm_stat × page size" },
+    "khongGiaiPhongTyLe":       { "canhCao": 0.6, "nghiemTrong": 0.8,
+                                  "_huong": "CAO là xấu — (wired+compressor)/tổng. Đường ÍT NHẠY NHẤT, giữ lại làm lưới cuối." }
+  },
+
   "matLienLac": {
     "collectorImLangPhut": 3,
     "_ghiChu": "Đánh giá ở CLOUD, không ở collector — collector chết thì nó không tự báo được."

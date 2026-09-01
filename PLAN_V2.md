@@ -68,36 +68,32 @@ khỏe đều là kết luận đúng đắn rút ra từ dữ liệu sai.
 **🏁 DEMO cuối GĐ0 — anh tự bấm:** chạy `GIAM_SAT_DO_MAY_NAY=1 npm run dev`, so số trên
 màn hình với `df -h` và `sysctl vm.swapusage` gõ tay trong Terminal → **phải khớp**.
 
-- [ ] 🔴 **0.1 — Sửa lỗi đo ổ đĩa: đang báo 69,8% trong khi thật là 97,8%**
+- [x] 🔴 **0.1 — Sửa lỗi đo ổ đĩa: đang báo 69,8% trong khi thật là 97,8%**
   - (a) [collector/doc-macos-truc-tiep.ts:78](collector/doc-macos-truc-tiep.ts#L78) gộp mọi volume APFS theo container `disk3` rồi **giữ dòng ĐẦU TIÊN**. Dòng đầu là `/dev/disk3s3s1` gắn ở `/` — ảnh chụp hệ thống chỉ-đọc, dùng 11,9 GB / trống 5,2 GB → **69,8%**. Volume thật `/System/Volumes/Data` (194 GB, 98%) bị `if (daCo.has(container)) continue` bỏ qua. Sửa: gộp theo container thì **CỘNG cột Used của mọi volume anh em**, lấy Available **một lần** (chúng dùng chung). Kết quả đúng: `231.566.088 / (231.566.088 + 5.182.796) = 97,81%`, trống 5,31 GB — khớp `df -h` và `diskutil info disk3`.
   - (a2) ⚠️ Đây là **cùng họ** với vết sẹo đã ghi trong `CLAUDE.md` ("phần trăm đĩa APFS lệch 21 điểm"). Lần trước sửa đúng *công thức phần trăm* nhưng để lại lỗi *chọn nhầm volume*. Sai theo hướng nguy hiểm nhất: **báo nhẹ hơn thực tế, không bao giờ chạm ngưỡng**.
   - (b) Chạy `npm run dev:may-nay`, mở trang chi tiết máy → ô ổ đĩa hiện **97,8%** và **5,3 GB**. Mở Terminal gõ `df -h` → hai con số phải khớp nhau.
   - (c) `tests/doc-macos-dia.test.ts` — dùng **mẫu `df -k` thật chụp từ máy này** làm fixture, khẳng định ra 97,8% chứ không phải 69,8%. Test hồi quy vĩnh viễn.
   - (d) 0,25 ngày
-  - (e) chặn: MÁY
 
-- [ ] 🔴 **0.2 — Sửa lỗi đo áp lực bộ nhớ: báo "bình thường" trên máy đang thrashing**
+- [x] 🔴 **0.2 — Sửa lỗi đo áp lực bộ nhớ: báo "bình thường" trên máy đang thrashing**
   - (a) Công thức hiện tại (`doc-macos-truc-tiep.ts:168-169`) là `(wired + compressor) / tổng`, ngưỡng `>0.6 warn`, `>0.8 critical`. Đo thật: 58–61% → **`normal`**. Cùng lúc đó swap 84,8%, bộ nhớ trống **64 MB trên 8 GB**, 2,6 triệu swapouts tích lũy. `ram_phan_tram` ~82,4% cũng dưới ngưỡng 85 → **cả hai chỉ số bộ nhớ đều im lặng trên một máy đang thrash**. Nghịch lý: compressor nén càng tốt thì tỷ lệ này càng **tụt xuống** đúng lúc máy khổ nhất. Sửa thành **bốn đường vào `critical`, chỉ cần MỘT**: bộ nhớ trống ≤ 3% · swap dùng ≥ 80% · swap ra/giây ≥ 10 MB/s · (wired+compressor) ≥ 80%.
   - (b) Chạy `npm run dev:may-nay` ngay lúc này → chỉ số áp lực bộ nhớ phải hiện **"Nghiêm trọng"**, không phải "Bình thường".
   - (c) `tests/doc-macos-bo-nho.test.ts` — mẫu `vm_stat` + `vm.swapusage` thật của máy này ⇒ `ap_luc_bo_nho === "critical"`. Kèm ca ngược: máy 8 GB dùng 40%, swap 0 ⇒ `normal`.
   - (d) 0,25 ngày
-  - (e) chặn: MÁY
 
-- [ ] **0.3 — Thêm 8 chỉ số còn thiếu (và sửa một chỉ số hiểu sai)**
+- [x] **0.3 — Thêm 8 chỉ số còn thiếu (và sửa một chỉ số hiểu sai)**
   - (a) `kern.num_threads` = 10240 **bằng đúng** `kern.maxfilesperproc` = 10240 → đó là **TRẦN, không phải số đếm**. Số thật lấy từ header `top -l 1 -n 0`: **499 tiến trình / 3.698 thread**. Chỉ số phải là **tỷ lệ so với trần** (36% và 24%), vì số tuyệt đối vô nghĩa với người đọc và không mang sang máy khác được. Thêm 8 chỉ số mới, tất cả bằng lệnh **chỉ đọc**: ① **swap ra/giây** (hiệu số `Swapouts` × page size — hiện luôn `null`, khiến luật thrashing chưa bao giờ nổ được) ② **nguồn điện & pin** (`pmset -g batt`) ③ **ghìm tốc độ vì nhiệt** (`pmset -g therm`) ④ tiến trình/thread theo tỷ lệ trần ⑤ **nghẽn I/O** (`iostat -c 2` cột `tps`, `KB/t` + load) ⑥ **cổng lắng nghe ra ngoài** (`netstat -an -p tcp`) ⑦ **ảnh chụp Time Machine cục bộ** (`tmutil`) ⑧ **dung lượng vùng nhớ ảo trên đĩa** (dòng `/System/Volumes/VM` của `df -k`).
   - (a2) ⚠️ **Cố ý KHÔNG dùng `lsof`** cho cổng — nó trả về tên người dùng và đường dẫn nhị phân, vi phạm Nghị định 13/2023/NĐ-CP. `netstat` chỉ trả cổng. Tương tự, lọc bỏ số hiệu người dùng (`gui/501/…`) khỏi tên dịch vụ trước khi lưu.
   - (b) Mở trang chi tiết máy → thấy dòng **"Đang chạy bằng pin — 61%, còn 3 giờ 40 phút"** và **"Cổng 3111 đang mở ra toàn mạng"**. Cắm sạc → dòng đầu đổi trong vòng 1 phút.
   - (c) `tests/doc-macos-chi-so-moi.test.ts` — parse đúng cả hai dạng `AC Power`/`Battery Power`; phân biệt `*.3111` (ra ngoài) với `127.0.0.1.18789` (chỉ trong máy); tỷ lệ thread tính theo `kern.num_threads` chứ không coi nó là số đếm. Mở rộng `tests/khong-lo-du-lieu-ca-nhan.test.ts`: khẳng định danh sách cổng **không chứa tên tiến trình hay đường dẫn**.
   - (d) 0,5 ngày
-  - (e) chặn: MÁY
 
-- [ ] **0.4 — Migration cột mới + hàm ảnh chụp sức khỏe**
+- [x] **0.4 — Migration cột mới + hàm ảnh chụp sức khỏe**
   - (a) `0012_chi_so_macos.sql`: thêm cột hẹp (`nguon_dien`, `pin_phan_tram`, `pin_con_phut`, `gioi_han_toc_do_cpu`, `so_tien_trinh`, `so_thread`, `tran_tien_trinh`, `tran_thread`, `swap_ra_moi_giay`, `swap_tong_mb`) + **một** cột `chi_so_them jsonb` cho thứ dạng danh sách. `create or replace function ghi_metric` trong migration MỚI — **không sửa `0002` đã chạy** (rule 5). Thêm ràng buộc `check` chống lộ dữ liệu cá nhân cho `chi_so_them`. `0013_anh_chup_suc_khoe.sql`: hàm trả **đúng một dòng mỗi máy** với ~45 cột đã tính sẵn, gồm **độ bền bỉ tính bằng phút** (`so_phut_dia_thap`, `so_phut_swap_cao`, `so_phut_tai_cao_cpu_ranh`) dùng kỹ thuật gaps-and-islands — đếm **chuỗi liên tục gần nhất**, không phải tổng số mẫu vượt ngưỡng (đếm tổng thì một mẫu xấu từ 90 phút trước làm luật nổ mãi).
   - (a2) Hàm này **có đọc `metrics_raw`** — cửa sổ ≤ 2 giờ, đi thẳng theo khoá chính, trả về một dòng ~2 KB. Tinh thần của luật "giao diện chỉ đọc bảng gộp" là cấm **kéo dòng thô ra khỏi Postgres** và đốt băng thông, không phải cấm gộp bên trong. Phải ghi rõ trong comment hàm **và** trong ADR-004, nếu không phiên sau sẽ coi là vi phạm.
   - (b) Chạy hệ thống 10 phút → `select * from anh_chup_suc_khoe()` trả về một dòng có đủ số của máy anh.
   - (c) `tests/anh-chup-suc-khoe.test.ts` — 10 mẫu thấp → 1 mẫu bình thường → 5 mẫu thấp phải trả **5 phút**, không phải 15 · máy chưa có số liệu vẫn ra **1 dòng toàn `null`**, không biến mất khỏi báo cáo (dùng `left join lateral`).
   - (d) 1 ngày
-  - (e) chặn: MÁY
 
 ---
 
@@ -117,7 +113,6 @@ cần làm theo thứ tự, và hệ quả nếu không làm gì. Không còn c�
   - (b) Chạy `npm run dev:may-nay`, xem thư cảnh báo in ra terminal: phải là câu tiếng Việt đọc hiểu được, **không còn dòng `• máy X — cpu_phan_tram: 97 (mức nghiem_trong)`**. So câu trong thư với câu trên dashboard → **phải giống hệt nhau**.
   - (c) `tests/dien-giai.test.ts` (cảnh báo backup rỗng và CSDL mất kết nối đều mang `dien_giai` tới tận outbox) · `tests/mot-nguon-van-ban.test.ts` — chạy `chayMotVong` rồi **so chuỗi**: thân thư trong `alert_notifications` chứa đúng câu mà lớp phiên dịch sinh cho giao diện; bước 6b ném lỗi ⇒ thư **vẫn gửi** với thân cũ; chạy vòng 3 lần ⇒ vẫn đúng 1 email.
   - (d) 0,75 ngày
-  - (e) chặn: MÁY
 
 - [ ] 🔴 **1.2 — Cho engine đọc nốt 18 dòng ngưỡng còn lại**
   - (a) **Nghịch lý đắt giá nhất của dự án:** `config/nguong-canh-bao.json` đã khai đủ 20 dòng ngưỡng từ ngày đầu, nhưng `danh_gia_nguong` chỉ có **2 nhánh** — `cpu_phan_tram` và `ram_phan_tram` (`0005_engine_nguong.sql:52-53`, đã kiểm chứng). **Không có một luật nào cho ổ đĩa.** Máy đang 97,8% đầy mà engine hoàn toàn mù. Mở rộng `danh_gia_nguong` thêm nhánh: `dia_phan_tram_dung` (80/90), **`dia_con_lai_gb` (20/10)**, `ap_luc_bo_nho`, `swap_dung_mb`, `cpu_hang_doi`. Thêm cột `he_dieu_hanh` vào `cau_hinh_nguong` để **bỏ luật `ram_phan_tram` cho macOS** — tài liệu của chính dự án (`docs/architecture/metric-2-nen-tang.md` §2.1) viết *"90% RAM đã dùng trên máy Mac là bình thường"*, áp 85% là nguồn báo động giả. Nối `du_bao_day_dia()` vào `chayMotVong` với ngưỡng 14/7 ngày đã khai sẵn (hàm này hiện **không ai gọi** — đã kiểm chứng).

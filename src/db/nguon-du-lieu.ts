@@ -40,10 +40,20 @@ export type CanhBao = {
   tiep_nhan_boi: string | null;
 };
 
-let db: PGlite | null = null;
+/**
+ * Khởi tạo một lần cho cả TIẾN TRÌNH.
+ *
+ * 🔴 Phải để ở `globalThis`, không để ở biến cấp module. Next dev nạp module theo từng
+ * route/lớp webpack riêng, nên biến cấp module cho ra NHIỀU bản PGlite khác nhau: trang `/`
+ * dựng một CSDL, trang `/may/[id]` dựng một CSDL khác, và vì `id` là `gen_random_uuid()`
+ * nên bấm vào thẻ máy ở trang chủ luôn ra "Không tìm thấy máy chủ này".
+ * Cùng lý do mà `do-lien-tuc.ts` đã phải đặt cờ chống nhân bản ở `globalThis`.
+ */
+const KHOA_DB = Symbol.for("giamsat.pglite");
+type KhoDb = { [KHOA_DB]?: PGlite | null };
 
-/** Khởi tạo một lần cho cả tiến trình. Next.js dev tải lại module nên phải nhớ trạng thái. */
 export async function layDb(): Promise<PGlite> {
+  const db = (globalThis as KhoDb)[KHOA_DB];
   if (db) return db;
   const moi = new PGlite();
   await napMigration(moi);
@@ -62,7 +72,7 @@ export async function layDb(): Promise<PGlite> {
       console.error("Không đo được máy này:", e instanceof Error ? e.message : e);
     }
   }
-  db = moi;
+  (globalThis as KhoDb)[KHOA_DB] = moi;
   return moi;
 }
 

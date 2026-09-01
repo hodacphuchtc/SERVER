@@ -40,6 +40,38 @@ export type DongRong = {
   thoi_diem_khoi_dong: string | null;
   tien_trinh_top: Array<{ ten: string; cpu: number; ram_mb: number }>;
   dich_vu_thieu: string[];
+
+  /* ── Bổ sung 01/09/2026 (hạng mục 0.3). Đều là `?` để đường thu thập qua exporter —
+        vốn không cấp được chúng — không phải khai null thủ công ở mọi chỗ. ── */
+
+  /** Byte ghi xuống swap mỗi giây. Là TỐC ĐỘ, khác hẳn `swap_dung_mb` (mức tồn). */
+  swap_ra_moi_giay?: number | null;
+  /** Tổng dung lượng swap, để tính tỷ lệ dùng thay vì so số tuyệt đối. */
+  swap_tong_mb?: number | null;
+  /** "pin" | "dien" — máy chủ chạy bằng pin là một cái hẹn giờ tắt máy. */
+  nguon_dien?: "pin" | "dien" | null;
+  pin_phan_tram?: number | null;
+  pin_con_phut?: number | null;
+  /** % tốc độ CPU còn được phép dùng. 100 = không bị ghìm vì nhiệt. */
+  gioi_han_toc_do_cpu?: number | null;
+  so_tien_trinh?: number | null;
+  so_thread?: number | null;
+  /** Trần của hệ điều hành — số tuyệt đối vô nghĩa nếu không so với trần. */
+  tran_tien_trinh?: number | null;
+  tran_thread?: number | null;
+  /** Nhịp và độ vụn I/O; `cpu_ranh` cao + tải cao = nghẽn đĩa, không phải quá tải tính toán. */
+  dia_tps?: number | null;
+  dia_kb_moi_lan?: number | null;
+  cpu_ranh?: number | null;
+  /** Dung lượng vùng nhớ ảo trên đĩa (GB) — vòng xoáy giữa trụ bộ nhớ và trụ chỗ lưu trữ. */
+  dia_vm_dung_gb?: number | null;
+  /** CHỈ số hiệu cổng, không kèm tên tiến trình (Nghị định 13 — xem phanTichCongLangNghe). */
+  cong_ra_ngoai?: number[];
+  cong_trong_may?: number | null;
+  /** Nhãn dịch vụ đang lặp lại vòng khởi động. */
+  dich_vu_loi?: string[];
+  /** Số ảnh chụp Time Machine cục bộ — nguyên nhân số một của "đĩa đầy ảo" trên macOS. */
+  snapshot_cuc_bo?: number | null;
 };
 
 const MB = 1024 * 1024;
