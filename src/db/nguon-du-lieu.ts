@@ -54,7 +54,9 @@ export async function layDb(): Promise<PGlite> {
   // exporter lên máy chủ. Bật bằng GIAM_SAT_DO_MAY_NAY=1.
   if (process.env.GIAM_SAT_DO_MAY_NAY === "1" && process.platform === "darwin") {
     try {
-      await themMayNay(moi);
+      const id = await themMayNay(moi);
+      const { batDauDoLienTuc } = await import("./do-lien-tuc");
+      batDauDoLienTuc(moi, id);
     } catch (e) {
       // Không được để việc đo máy làm sập cả trang — nó là thứ phụ trợ.
       console.error("Không đo được máy này:", e instanceof Error ? e.message : e);
@@ -71,7 +73,7 @@ export async function layDb(): Promise<PGlite> {
  * lệnh macOS chỉ cho biết TRẠNG THÁI HIỆN TẠI chứ không có lịch sử. Biểu đồ vì thế là một
  * đường phẳng; đó là sự thật, không phải lỗi hiển thị.
  */
-async function themMayNay(d: PGlite): Promise<void> {
+async function themMayNay(d: PGlite): Promise<string> {
   const { docMayNay } = await import("../../collector/doc-macos-truc-tiep");
   const { thong_tin, so_lieu } = await docMayNay();
   const bayGio = new Date();
@@ -101,7 +103,17 @@ async function themMayNay(d: PGlite): Promise<void> {
 
   // Cho engine chấm điểm máy thật này bằng đúng ngưỡng trong config — đây mới là phần
   // trả lời câu hỏi "ứng dụng nói gì về máy của tôi".
-  if (oTeNhat.pt >= 90 || oTeNhat.gb <= 10) {
+  // Đĩa có HAI ngưỡng độc lập, và cảnh báo phải nói đúng cái nào vừa bị chạm. Báo
+  // "dia_phan_tram: 69,8 · nghiêm trọng" thì người đọc thấy vô nghĩa (69,8% có gì nghiêm
+  // trọng?) và sẽ bỏ qua — trong khi lý do thật là ổ chỉ còn 4 GB. Ngưỡng tuyệt đối tồn
+  // tại chính vì phần trăm nói dối trên ổ lớn (BRD §6 nhóm B3).
+  if (oTeNhat.gb <= 10) {
+    await d.query(
+      `insert into public.alerts (host_id, chi_so, muc, gia_tri, nguong)
+       values ($1, 'dia_con_lai_gb', 'nghiem_trong', $2, 10)`,
+      [id, oTeNhat.gb],
+    );
+  } else if (oTeNhat.pt >= 90) {
     await d.query(
       `insert into public.alerts (host_id, chi_so, muc, gia_tri, nguong)
        values ($1, 'dia_phan_tram', 'nghiem_trong', $2, 90)`,
@@ -115,6 +127,7 @@ async function themMayNay(d: PGlite): Promise<void> {
       [id, so_lieu.ram_phan_tram],
     );
   }
+  return id;
 }
 
 export async function danhSachMay(): Promise<May[]> {

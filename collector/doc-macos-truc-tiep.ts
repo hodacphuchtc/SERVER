@@ -195,7 +195,8 @@ export async function docMayNay(): Promise<{ thong_tin: ThongTinMay; so_lieu: Do
         ? Math.round((1 - trongByte / ramTongByte) * 1000) / 10 : null,
       ram_tong_mb: Math.round(ramTongByte / 1048576),
       ram_con_lai_mb: Math.round(trongByte / 1048576),
-      swap_dung_mb: swapDungMb,
+      // Làm tròn: macOS báo 5602.62 MB nhưng cột trong CSDL là số nguyên.
+      swap_dung_mb: Math.round(swapDungMb),
       // Đây là ảnh chụp một thời điểm nên chưa có hiệu số swap-in; collector thật tính
       // theo hai lần quét liên tiếp.
       swap_vao_moi_giay: null,

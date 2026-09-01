@@ -1,0 +1,122 @@
+/**
+ * Chế độ giám sát THẬT chính máy đang chạy ứng dụng.
+ *
+ * Khác với dữ liệu mẫu (một ảnh chụp tĩnh), chế độ này đo lại mỗi 60 giây rồi chạy trọn
+ * vòng đánh giá — đúng nhịp mà Cloudflare Worker sẽ chạy khi lên môi trường thật. Nhờ vậy
+ * xem được toàn bộ dây chuyền hoạt động trên một máy có thật, trước khi có tài khoản nào.
+ *
+ * Email không gửi đi đâu cả: transport ở đây chỉ IN RA MÀN HÌNH. Đó là cố ý — chạy thử
+ * trên máy lập trình không được phép làm phiền hộp thư ai.
+ */
+
+import type { PGlite } from "@electric-sql/pglite";
+import { chayMotVong, tomTatMotDong } from "../engine/vong-danh-gia";
+import type { Transport } from "../email/gui-email";
+import { taoPartitionNgay } from "./nap-migration";
+
+const NHIP_MS = 60_000;
+
+/** Thư được in ra terminal thay vì gửi — thấy đủ nội dung mà không làm phiền ai. */
+const transportInRaManHinh: Transport = async (thu) => {
+  console.log(
+    `\n┌─ THƯ CẢNH BÁO (chế độ thử — KHÔNG gửi đi đâu) ─────────────\n` +
+      `│ Tới: ${thu.nguoi_nhan.join(", ")}\n` +
+      `│ ${thu.tieu_de}\n` +
+      `├────────────────────────────────────────────────────────────\n` +
+      thu.than_thu.split("\n").map((d) => `│ ${d}`).join("\n") +
+      `\n└────────────────────────────────────────────────────────────\n`,
+  );
+  return { ok: true, ma: "in-ra-man-hinh" };
+};
+
+/**
+ * Ghi một nhịp đo của máy này vào cả bảng thô lẫn bảng gộp.
+ *
+ * Phải ghi vào `metrics_raw` thì engine ngưỡng mới đánh giá được (nó đọc cửa sổ vài phút
+ * gần nhất ở bảng thô), và ghi vào `metrics_5m` thì biểu đồ mới vẽ được — giao diện chỉ
+ * đọc bảng gộp, không bao giờ đọc bảng thô.
+ */
+export async function ghiMotNhip(db: PGlite, hostId: string): Promise<void> {
+  const { docMayNay } = await import("../../collector/doc-macos-truc-tiep");
+  const { so_lieu } = await docMayNay();
+  const luc = new Date();
+  await taoPartitionNgay(db, luc);
+
+  const oTeNhat = so_lieu.dia.reduce<{ pt: number; gb: number }>(
+    (a, x) => (x.phan_tram_dung > a.pt ? { pt: x.phan_tram_dung, gb: x.con_lai_gb } : a),
+    { pt: 0, gb: 0 },
+  );
+
+  await db.query(
+    `insert into public.metrics_raw
+       (thoi_diem, host_id, cpu_phan_tram, cpu_hang_doi, tai_trung_binh_15p,
+        ram_phan_tram, ram_tong_mb, ram_con_lai_mb, swap_dung_mb, ap_luc_bo_nho,
+        dia, mang_vao_byte_moi_giay, mang_ra_byte_moi_giay,
+        uptime_giay, thoi_diem_khoi_dong, tien_trinh_top)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14,$15,$16::jsonb)
+     on conflict (host_id, thoi_diem) do nothing`,
+    [luc.toISOString(), hostId,
+     so_lieu.cpu_phan_tram, so_lieu.cpu_hang_doi, so_lieu.tai_trung_binh_15p,
+     so_lieu.ram_phan_tram, so_lieu.ram_tong_mb, so_lieu.ram_con_lai_mb,
+     so_lieu.swap_dung_mb, so_lieu.ap_luc_bo_nho,
+     JSON.stringify(so_lieu.dia), so_lieu.mang_vao_byte_moi_giay, so_lieu.mang_ra_byte_moi_giay,
+     so_lieu.uptime_giay, so_lieu.thoi_diem_khoi_dong,
+     JSON.stringify(so_lieu.tien_trinh_top)],
+  );
+
+  await db.query(
+    `update public.hosts set lan_day_du_lieu_cuoi = $2::timestamptz where id = $1`,
+    [hostId, luc.toISOString()],
+  );
+
+  // Khung 5 phút cho biểu đồ.
+  const khung = new Date(Math.floor(luc.getTime() / 300_000) * 300_000);
+  await db.query(
+    `insert into public.metrics_5m
+       (khung_gio, host_id, so_mau, cpu_min, cpu_avg, cpu_max, cpu_p95,
+        ram_min, ram_avg, ram_max, ram_p95, dia_phan_tram_max, dia_con_lai_gb_min, mang_ra_avg)
+     values ($1,$2,1,$3,$3,$3,$3,$4,$4,$4,$4,$5,$6,$7)
+     on conflict (host_id, khung_gio) do update set
+       so_mau = public.metrics_5m.so_mau + 1,
+       cpu_min = least(public.metrics_5m.cpu_min, excluded.cpu_min),
+       cpu_avg = excluded.cpu_avg,
+       cpu_max = greatest(public.metrics_5m.cpu_max, excluded.cpu_max),
+       ram_avg = excluded.ram_avg,
+       ram_max = greatest(public.metrics_5m.ram_max, excluded.ram_max),
+       dia_phan_tram_max = excluded.dia_phan_tram_max,
+       dia_con_lai_gb_min = excluded.dia_con_lai_gb_min`,
+    [khung.toISOString(), hostId, so_lieu.cpu_phan_tram, so_lieu.ram_phan_tram,
+     oTeNhat.pt, oTeNhat.gb, so_lieu.mang_ra_byte_moi_giay],
+  );
+}
+
+/**
+ * Bật vòng đo + đánh giá chạy nền.
+ *
+ * Giữ cờ ở `globalThis` chứ không ở biến module: `next dev` nạp lại module mỗi lần sửa
+ * code, để ở biến module thì mỗi lần lưu file lại đẻ thêm một bộ đếm giờ, và sau mười lần
+ * sửa là mười vòng đo chạy song song trên cùng một cơ sở dữ liệu.
+ */
+export function batDauDoLienTuc(db: PGlite, hostId: string): void {
+  const g = globalThis as unknown as { __giamSatDangChay?: boolean };
+  if (g.__giamSatDangChay) return;
+  g.__giamSatDangChay = true;
+
+  console.log(`\n🟢 Bắt đầu giám sát máy này — đo lại mỗi ${NHIP_MS / 1000} giây.\n`);
+
+  const motVong = async () => {
+    try {
+      await ghiMotNhip(db, hostId);
+      const t = await chayMotVong(db, { transport: transportInRaManHinh });
+      console.log(`[giám sát] ${tomTatMotDong(t)}`);
+    } catch (e) {
+      // Một nhịp hỏng không được làm chết vòng đo — nhịp sau vẫn phải chạy.
+      console.error("[giám sát] nhịp lỗi:", e instanceof Error ? e.message : e);
+    }
+  };
+
+  void motVong();
+  const dongHo = setInterval(() => void motVong(), NHIP_MS);
+  // Không giữ tiến trình sống chỉ vì bộ đếm giờ này.
+  if (typeof dongHo.unref === "function") dongHo.unref();
+}
