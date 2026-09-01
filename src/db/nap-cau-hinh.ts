@@ -1,10 +1,11 @@
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import type { PGlite } from "@electric-sql/pglite";
 
-const DUONG_DAN = fileURLToPath(
-  new URL("../../config/nguong-canh-bao.json", import.meta.url),
-);
+// Dựng từ thư mục gốc tiến trình, KHÔNG dùng new URL(..., import.meta.url): webpack của
+// Next thay lớp URL bằng bản polyfill riêng, nên fileURLToPath nhận một URL "lạ" và ném
+// ERR_INVALID_ARG_TYPE ngay lúc build. Đây là lần thứ hai cùng một cạm bẫy trong dự án.
+const DUONG_DAN = join(process.cwd(), "config", "nguong-canh-bao.json");
 
 type Nguong = { canhCao: number; nghiemTrong: number; giuTrongPhut?: number };
 

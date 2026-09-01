@@ -184,6 +184,10 @@ export function chuyenWindows(truoc: LanQuet, sau: LanQuet): DongRong {
 
 export function chuyenMacos(truoc: LanQuet, sau: LanQuet): DongRong {
   const m = sau.mau;
+  // 🔴 KHÔNG nhân cứng 4096. Trên Apple Silicon page size là 16384 — nhân cứng 4096 là sai
+  // GẤP BỐN LẦN, và sai theo hướng nguy hiểm: báo ít bộ nhớ hơn thực tế nên không bao giờ
+  // chạm ngưỡng. Lỗi này chỉ lộ ra khi đo trên máy M1 thật, fixture không bắt được.
+  const pageSize = mot(m, "node_memory_page_size_bytes") ?? 4096;
   const ramTong = mot(m, "node_memory_total_bytes");
   // macOS coi bộ nhớ inactive là CÓ THỂ LẤY LẠI. Không cộng nó vào phần trống là báo
   // động giả liên tục — xem §2.1 của bảng đối chiếu.
@@ -220,7 +224,7 @@ export function chuyenMacos(truoc: LanQuet, sau: LanQuet): DongRong {
       const s = mot(m, "node_memory_swap_used_bytes");
       return s === null ? null : Math.round(s / MB);
     })(),
-    swap_vao_moi_giay: swapVao === null ? null : swapVao * 4096,
+    swap_vao_moi_giay: swapVao === null ? null : swapVao * pageSize,
     ap_luc_bo_nho: apLucBoNho(m, swapVao),
     dia,
     mang_vao_byte_moi_giay: moiGiay(truoc, sau, (x) =>

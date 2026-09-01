@@ -106,7 +106,7 @@ báo. Đo bằng: sự cố tiếp theo, email đến TRƯỚC tin nhắn của 
 Windows lẫn máy Mac** chảy vào mỗi phút. Sau đó bạn tắt collector → 3 phút sau nhận email
 *"Không nhận được số liệu từ hệ thống giám sát"*.
 
-- [~] 🔴 **2.1 — SPIKE: đo xem `node_exporter` trên macOS thật sự lấy được gì** *(dở — dừng ở: bảng đối chiếu `docs/architecture/metric-2-nen-tang.md` đã viết đủ, không ô nào trống, và parser + 30 test đã chạy trên fixture của cả 2 OS. CHỜ: chạy `node_exporter` trên máy Mac THẬT để xác nhận tên metric khớp — đây mới là phần "spike")*
+- [~] 🔴 **2.1 — SPIKE: đo xem `node_exporter` trên macOS thật sự lấy được gì** *(dở — dừng ở: bảng đối chiếu đã đủ; parser exporter + 30 test; VÀ đã bổ sung bộ đọc macOS TRỰC TIẾP bằng lệnh hệ điều hành (`collector/doc-macos-truc-tiep.ts` + 7 test), chạy thật trên máy M1 và đối chiếu khớp với `df -h`. CHỜ: cài `node_exporter` trên máy Mac của công ty để xác nhận tên metric)*
   - (a) Đây là **mắt xích yếu nhất của toàn dự án** nên làm ngay đầu tiên. `brew install
     node_exporter` trên máy Mac, chạy, rồi `curl -s localhost:9100/metrics` và đối chiếu:
     có đủ CPU, RAM, đĩa, mạng không? Tên metric darwin **khác Linux** (không có

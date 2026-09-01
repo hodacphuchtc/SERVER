@@ -11,6 +11,7 @@
  */
 import { PGlite } from "@electric-sql/pglite";
 import { napMigration, taoPartitionNgay } from "./nap-migration";
+import { napCauHinhNguong } from "./nap-cau-hinh";
 
 export type May = {
   id: string;
@@ -46,9 +47,74 @@ export async function layDb(): Promise<PGlite> {
   if (db) return db;
   const moi = new PGlite();
   await napMigration(moi);
+  await napCauHinhNguong(moi);
   await napDuLieuDemo(moi);
+  // Chế độ "đo máy này": ngoài 4 máy mẫu, thêm CHÍNH MÁY ĐANG CHẠY với số liệu thật đọc
+  // bằng lệnh macOS. Nhờ vậy xem được ứng dụng nói gì về một máy có thật, trước khi cài
+  // exporter lên máy chủ. Bật bằng GIAM_SAT_DO_MAY_NAY=1.
+  if (process.env.GIAM_SAT_DO_MAY_NAY === "1" && process.platform === "darwin") {
+    try {
+      await themMayNay(moi);
+    } catch (e) {
+      // Không được để việc đo máy làm sập cả trang — nó là thứ phụ trợ.
+      console.error("Không đo được máy này:", e instanceof Error ? e.message : e);
+    }
+  }
   db = moi;
   return moi;
+}
+
+/**
+ * Nạp CHÍNH MÁY ĐANG CHẠY vào cơ sở dữ liệu như một máy chủ được giám sát.
+ *
+ * Lấy 24 mẫu cách nhau 5 phút cho 2 giờ gần nhất — tất cả cùng một ảnh chụp thật, vì các
+ * lệnh macOS chỉ cho biết TRẠNG THÁI HIỆN TẠI chứ không có lịch sử. Biểu đồ vì thế là một
+ * đường phẳng; đó là sự thật, không phải lỗi hiển thị.
+ */
+async function themMayNay(d: PGlite): Promise<void> {
+  const { docMayNay } = await import("../../collector/doc-macos-truc-tiep");
+  const { thong_tin, so_lieu } = await docMayNay();
+  const bayGio = new Date();
+
+  const r = await d.query<{ id: string }>(
+    `insert into public.hosts (ten_nghiep_vu, he_dieu_hanh, muc_quan_trong, token_bam, lan_day_du_lieu_cuoi)
+     values ($1, 'macos', 'song_con', 'bam-may-nay', now()) returning id`,
+    [`${thong_tin.ten_may} (máy đang chạy ứng dụng)`],
+  );
+  const id = r.rows[0]!.id;
+  const oTeNhat = so_lieu.dia.reduce<{ pt: number; gb: number }>(
+    (a, x) => (x.phan_tram_dung > a.pt ? { pt: x.phan_tram_dung, gb: x.con_lai_gb } : a),
+    { pt: 0, gb: 0 },
+  );
+
+  for (let i = 23; i >= 0; i--) {
+    const t = new Date(bayGio.getTime() - i * 300_000);
+    await d.query(
+      `insert into public.metrics_5m
+         (khung_gio, host_id, so_mau, cpu_min, cpu_avg, cpu_max, cpu_p95,
+          ram_min, ram_avg, ram_max, ram_p95, dia_phan_tram_max, dia_con_lai_gb_min, mang_ra_avg)
+       values ($1,$2,1,$3,$3,$3,$3,$4,$4,$4,$4,$5,$6,$7) on conflict do nothing`,
+      [t.toISOString(), id, so_lieu.cpu_phan_tram, so_lieu.ram_phan_tram,
+       oTeNhat.pt, oTeNhat.gb, so_lieu.mang_ra_byte_moi_giay],
+    );
+  }
+
+  // Cho engine chấm điểm máy thật này bằng đúng ngưỡng trong config — đây mới là phần
+  // trả lời câu hỏi "ứng dụng nói gì về máy của tôi".
+  if (oTeNhat.pt >= 90 || oTeNhat.gb <= 10) {
+    await d.query(
+      `insert into public.alerts (host_id, chi_so, muc, gia_tri, nguong)
+       values ($1, 'dia_phan_tram', 'nghiem_trong', $2, 90)`,
+      [id, oTeNhat.pt],
+    );
+  }
+  if ((so_lieu.ram_phan_tram ?? 0) >= 85 || so_lieu.ap_luc_bo_nho === "warn") {
+    await d.query(
+      `insert into public.alerts (host_id, chi_so, muc, gia_tri, nguong)
+       values ($1, 'ram_phan_tram', 'canh_cao', $2, 85)`,
+      [id, so_lieu.ram_phan_tram],
+    );
+  }
 }
 
 export async function danhSachMay(): Promise<May[]> {

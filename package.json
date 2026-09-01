@@ -11,7 +11,8 @@
     "check:cau-truc": "node scripts/check-structure.mjs",
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "dev:may-nay": "GIAM_SAT_DO_MAY_NAY=1 next dev"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.2.17",
