@@ -356,7 +356,7 @@ nhỏ hơn 70% so với trung bình 7 ngày"*.
   - (d) 1 ngày.
   - (e) chặn: NGOÀI — cần tài khoản Cloudflare.
 
-- [ ] **6.2 — Đăng nhập và ba vai**
+- [~] **6.2 — Đăng nhập và ba vai** *(dở — dừng ở: bảng `nguoi_dung`, policy RLS cho cả 3 vai, hàm `tom_tat_cho_lanh_dao()` là cửa duy nhất của lãnh đạo, và 13 test kiểm ma trận quyền ở TẦNG DỮ LIỆU — bản tự động của thao tác "gõ thẳng URL". CHỜ: nối Supabase Auth thật và màn hình đăng nhập)*
   - (a) Supabase Auth. Ba vai: **Lãnh đạo** (chỉ trang tổng quan + email), **Quản trị**
     (đầy đủ), **Xem** (chỉ đọc). Chặn ở tầng RLS, không chỉ ẩn nút trên giao diện.
   - (b) Bạn đăng nhập bằng tài khoản Lãnh đạo rồi **gõ thẳng URL trang kỹ thuật** vào thanh
