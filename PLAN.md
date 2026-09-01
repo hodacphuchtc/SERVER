@@ -224,7 +224,7 @@ lãnh đạo. Ép tiếp 2 máy nữa cùng lúc → vẫn chỉ **một** email
     đưa vào một chùm cảnh báo và khẳng định **số email sinh ra**, không phải số cảnh báo.
   - (d) 1 ngày.
 
-- [~] **3.4 — Gửi email qua Resend + hàng đợi outbox + phân tầng người nhận** *(dở — dừng ở: outbox + leo thang phân tầng đã xong và có test; phần gọi HTTP API của Resend chờ tài khoản + tên miền)*
+- [~] **3.4 — Gửi email qua Resend + hàng đợi outbox + phân tầng người nhận** *(dở — dừng ở: outbox, leo thang, đổi vai→địa chỉ, client Resend và 13 test đã xong (transport tiêm vào nên test chạy trọn vòng đời không cần mạng). CHỜ: khoá API Resend + tên miền để cấu hình SPF/DKIM/DMARC)*
   - (a) Ghi vào bảng `alert_notifications` trước, Worker gửi sau (**outbox** — chống gửi
     trùng khi function timeout giữa chừng), có khoá idempotency
     `hash(máy + chỉ số + mức)`. Gọi **HTTP API của Resend, KHÔNG dùng SMTP**: Vercel/Worker
@@ -311,7 +311,7 @@ nhỏ hơn 70% so với trung bình 7 ngày"*.
 đọc hiểu ngay mà không cần hỏi ai. Đưa cho một người không làm kỹ thuật đọc → họ nói đúng
 được hệ thống tuần qua ổn hay không và có việc gì cần quyết.
 
-- [ ] **5.1 — Digest 8h sáng — gửi CẢ KHI mọi thứ bình thường**
+- [~] **5.1 — Digest 8h sáng — gửi CẢ KHI mọi thứ bình thường** *(dở — dừng ở: hàm soạn digest + 4 test đã xong, bao gồm ca ngày yên bình vẫn sinh email. CHỜ: nối vào lịch chạy thật và một hộp thư để nhận)*
   - (a) Email hằng ngày gom toàn bộ cảnh báo mức cảnh cáo trong 24 giờ. **Bắt buộc gửi kể
     cả khi không có gì bất thường**: *"Đêm qua 6/6 máy bình thường, backup thành công lúc
     02:14"*. Lý do: im lặng tuyệt đối không phân biệt được với hệ thống đã chết — đây
@@ -322,7 +322,7 @@ nhỏ hơn 70% so với trung bình 7 ngày"*.
   - (d) 1 ngày.
   - (e) chặn: MÁY.
 
-- [ ] **5.2 — Email tóm tắt tuần cho lãnh đạo, viết bằng ngôn ngữ quản trị**
+- [~] **5.2 — Email tóm tắt tuần cho lãnh đạo, viết bằng ngôn ngữ quản trị** *(dở — dừng ở: hàm soạn đủ 5 khối + 22 test đã xong, có bộ dò 22 từ cấm và test chứng minh bộ dò hoạt động thật. CHỜ: nghiệm thu BẰNG NGƯỜI — đưa email cho một người phi kỹ thuật đọc và hỏi 3 câu; cùng danh sách người nhận và tên nghiệp vụ từng máy)*
   - (a) Sáng thứ Hai. **Không một thuật ngữ kỹ thuật nào** — không "p95", không "5xx",
     không "swap". Đúng 5 khối: ① một câu kết luận ("Tuần qua hệ thống hoạt động ổn định")
     ② thời gian ngưng phục vụ **quy ra phút** kèm so sánh tuần trước ③ số nhân viên bị
