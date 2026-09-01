@@ -1,12 +1,12 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { PGlite } from "@electric-sql/pglite";
 
-// fileURLToPath chứ KHÔNG phải .pathname: .pathname giữ nguyên mã hoá phần trăm, nên
-// đường dẫn có dấu cách ("VIBE CODE") biến thành "VIBE%20CODE" và readdirSync không thấy
-// thư mục. Test đã bắt được đúng lỗi này.
-const THU_MUC_MIGRATION = fileURLToPath(new URL("../../supabase/migrations", import.meta.url));
+// Dựng từ thư mục gốc tiến trình chứ KHÔNG dùng new URL(..., import.meta.url): webpack
+// của Next.js phân tích tĩnh biểu thức đó rồi cố phân giải nó như một module và build đỏ.
+// (Trước đây chỗ này từng dùng .pathname, cũng sai: .pathname giữ nguyên mã hoá phần
+// trăm nên đường dẫn có dấu cách — "VIBE CODE" — biến thành "VIBE%20CODE".)
+const THU_MUC_MIGRATION = join(process.cwd(), "supabase", "migrations");
 
 /** Nạp toàn bộ migration theo thứ tự tên file. Dùng chung cho test và cho script dựng DB. */
 export async function napMigration(db: PGlite): Promise<string[]> {

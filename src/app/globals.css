@@ -1,0 +1,43 @@
+:root {
+  --nen: #f6f7f9; --the: #fff; --vien: #e3e6ea; --chu: #1b1f24; --chu-mo: #5c6672;
+  /* Ba màu trạng thái. Cố ý dùng cam-đỏ và xanh LAM-lục thay vì đỏ/xanh lá thuần:
+     ~8% nam giới mù màu đỏ-lục (WCAG 1.4.1). Mọi nơi dùng màu đều kèm chữ và biểu tượng. */
+  --on: #0f7b6c; --on-nen: #e6f4f1;
+  --chu-y: #9a6700; --chu-y-nen: #fff4d6;
+  --khan: #b3261e; --khan-nen: #fdecea;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--nen); color: var(--chu);
+  font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+a { color: inherit; }
+.bao { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 17px; margin: 28px 0 12px; }
+.phu { color: var(--chu-mo); font-size: 13px; margin: 0 0 20px; }
+.luoi { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.the {
+  background: var(--the); border: 1px solid var(--vien); border-radius: 10px;
+  padding: 14px 16px; text-decoration: none; display: block;
+}
+.the:hover { border-color: #b9c0c9; }
+.ten { font-weight: 600; margin-bottom: 6px; }
+.nhan {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px;
+  font-weight: 600; padding: 2px 9px; border-radius: 999px;
+}
+.on { background: var(--on-nen); color: var(--on); }
+.chu-y { background: var(--chu-y-nen); color: var(--chu-y); }
+.khan { background: var(--khan-nen); color: var(--khan); }
+.so { font-size: 30px; font-weight: 650; letter-spacing: -0.5px; }
+.moc { color: var(--chu-mo); font-size: 12.5px; }
+table { width: 100%; border-collapse: collapse; background: var(--the);
+        border: 1px solid var(--vien); border-radius: 10px; overflow: hidden; font-size: 14px; }
+th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .04em;
+     color: var(--chu-mo); padding: 10px 14px; border-bottom: 1px solid var(--vien); }
+td { padding: 10px 14px; border-bottom: 1px solid #f0f2f4; }
+tr:last-child td { border-bottom: 0; }
+.thanh { height: 9px; border-radius: 5px; background: #eceff2; overflow: hidden; }
+.thanh > i { display: block; height: 100%; }
+.bang-cuon { overflow-x: auto; }

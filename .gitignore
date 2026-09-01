@@ -16,6 +16,7 @@ node_modules/
 .pnp.js
 
 # Build / cache
+next-env.d.ts
 .next/
 out/
 dist/

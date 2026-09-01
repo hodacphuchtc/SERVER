@@ -366,7 +366,7 @@ nhỏ hơn 70% so với trung bình 7 ngày"*.
   - (d) 1 ngày.
   - (e) chặn: MÁY.
 
-- [ ] **6.3 — Trang tổng quan các máy + biểu đồ xu hướng**
+- [~] **6.3 — Trang tổng quan các máy + biểu đồ xu hướng** *(dở — dừng ở: 3 trang Next.js đã viết (`/` kỹ thuật, `/may/[id]` chi tiết có biểu đồ đường kèm đường ngưỡng, `/lanh-dao`), đọc qua `src/db/nguon-du-lieu.ts` — CHỈ đọc bảng gộp, không bao giờ đọc `metrics_raw`. Chạy được ngay bằng `npm run dev` với dữ liệu mẫu trong PGlite. CHỜ: nối Supabase thật và số liệu thật)*
   - (a) Danh sách máy kèm trạng thái; bấm vào một máy ra biểu đồ **đường** CPU/RAM/đĩa/mạng
     7 ngày **có vẽ đường ngưỡng**. Đọc từ `metrics_5m`/`metrics_1h`, **không bao giờ query
     bảng thô từ trình duyệt** (Supabase free chỉ 5 GB băng thông/tháng).
@@ -377,7 +377,7 @@ nhỏ hơn 70% so với trung bình 7 ngày"*.
   - (d) 1,5 ngày.
   - (e) chặn: MÁY.
 
-- [ ] **6.4 — So sánh giữa các máy + nhật ký cảnh báo**
+- [~] **6.4 — So sánh giữa các máy + nhật ký cảnh báo** *(dở — dừng ở: cột ngang đã sắp xếp + bảng nhật ký cảnh báo kèm trạng thái xử lý đã có trên trang `/`. Cố ý không dùng biểu đồ tròn/gauge. CHỜ: số liệu thật để nghiệm thu)*
   - (a) **Cột ngang đã sắp xếp** để so sánh các máy (không dùng biểu đồ tròn, không gauge —
     mắt người đọc độ dài chính xác, đọc góc và diện tích thì không). Bảng nhật ký cảnh báo
     kèm trạng thái xử lý và thời gian khắc phục.

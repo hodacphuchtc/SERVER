@@ -24,7 +24,7 @@ import {
   docPrometheus,
   type DongRong,
   type LanQuet,
-} from "./doc-metric.js";
+} from "./doc-metric";
 
 export type CauHinhMay = {
   ten_nghiep_vu: string;

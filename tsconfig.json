@@ -2,7 +2,8 @@
   "compilerOptions": {
     "target": "ES2022",
     "lib": [
-      "ES2022"
+      "ES2022",
+      "DOM"
     ],
     "module": "ESNext",
     "moduleResolution": "bundler",
@@ -16,12 +17,25 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "noEmit": true
+    "noEmit": true,
+    "jsx": "preserve",
+    "allowJs": true,
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "include": [
     "src/**/*",
     "tests/**/*",
-    "collector/**/*"
+    "collector/**/*",
+    "next-env.d.ts",
+    ".next/types/**/*.ts"
   ],
-  "_ghiChu": "scripts/plan-phu-thuoc.ts CỐ Ý nằm ngoài: đó là tiện ích do skill khoi-tao-du-an chép sẵn, đọc dòng (f) phụ-thuộc mà PLAN.md dự án này không dùng, và cần tsx chưa cài. Không phải mã của dự án — đừng đưa vào typecheck rồi đi sửa nó."
+  "_ghiChu": "scripts/plan-phu-thuoc.ts CỐ Ý nằm ngoài: đó là tiện ích do skill khoi-tao-du-an chép sẵn, đọc dòng (f) phụ-thuộc mà PLAN.md dự án này không dùng, và cần tsx chưa cài. Không phải mã của dự án — đừng đưa vào typecheck rồi đi sửa nó.",
+  "exclude": [
+    "node_modules"
+  ]
 }
