@@ -1,4 +1,7 @@
 # Secrets — TUYỆT ĐỐI không đẩy lên Git
+# settings.local.json chứa cấu hình quyền RIÊNG của từng máy (acceptEdits) — không
+# đẩy lên để máy khác không âm thầm thừa hưởng chế độ tự duyệt edit.
+.claude/settings.local.json
 .env
 .env.*
 !.env.example

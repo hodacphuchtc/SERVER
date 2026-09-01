@@ -106,7 +106,7 @@ báo. Đo bằng: sự cố tiếp theo, email đến TRƯỚC tin nhắn của 
 Windows lẫn máy Mac** chảy vào mỗi phút. Sau đó bạn tắt collector → 3 phút sau nhận email
 *"Không nhận được số liệu từ hệ thống giám sát"*.
 
-- [ ] 🔴 **2.1 — SPIKE: đo xem `node_exporter` trên macOS thật sự lấy được gì**
+- [~] 🔴 **2.1 — SPIKE: đo xem `node_exporter` trên macOS thật sự lấy được gì** *(dở — dừng ở: bảng đối chiếu `docs/architecture/metric-2-nen-tang.md` đã viết đủ, không ô nào trống, và parser + 30 test đã chạy trên fixture của cả 2 OS. CHỜ: chạy `node_exporter` trên máy Mac THẬT để xác nhận tên metric khớp — đây mới là phần "spike")*
   - (a) Đây là **mắt xích yếu nhất của toàn dự án** nên làm ngay đầu tiên. `brew install
     node_exporter` trên máy Mac, chạy, rồi `curl -s localhost:9100/metrics` và đối chiếu:
     có đủ CPU, RAM, đĩa, mạng không? Tên metric darwin **khác Linux** (không có
@@ -146,7 +146,7 @@ Windows lẫn máy Mac** chảy vào mỗi phút. Sau đó bạn tắt collector
     từ chối · token sai bị từ chối · khóa anon không đọc được `hosts`.
   - (d) 1 ngày.
 
-- [ ] **2.4 — Collector: quét exporter, gộp một dòng rộng, đẩy lên cloud**
+- [~] **2.4 — Collector: quét exporter, gộp một dòng rộng, đẩy lên cloud** *(dở — dừng ở: `collector/` đã xong đủ vòng đời + hàng đợi mất mạng + 16 test, kể cả test nối hai đầu chứng minh payload qua được mọi ràng buộc schema. CHỜ: đóng gói chạy nền (winsw / LaunchDaemon) và chạy trên máy thật)*
   - (a) `collector/index.ts` (~300 dòng): mỗi 60 giây quét tất cả exporter đã khai trong
     `config/may-chu.json` → chuyển theo bảng đối chiếu của 2.1 → gộp thành **một dòng rộng
     cho mỗi máy** → POST một request duy nhất lên RPC `ghi_metric`. **Cắt bỏ tham số dòng

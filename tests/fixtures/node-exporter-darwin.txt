@@ -1,0 +1,32 @@
+# HELP node_cpu_seconds_total Seconds the CPUs spent in each mode
+# TYPE node_cpu_seconds_total counter
+node_cpu_seconds_total{cpu="0",mode="idle"} 5000.0
+node_cpu_seconds_total{cpu="0",mode="user"} 900.0
+node_cpu_seconds_total{cpu="0",mode="system"} 400.0
+node_cpu_seconds_total{cpu="1",mode="idle"} 5100.0
+node_cpu_seconds_total{cpu="1",mode="user"} 850.0
+node_cpu_seconds_total{cpu="1",mode="system"} 350.0
+# HELP node_load1 1m load average
+node_load1 3.2
+node_load15 2.1
+# HELP node_memory_total_bytes Total memory (darwin)
+node_memory_total_bytes 1.7179869184e+10
+node_memory_free_bytes 1.073741824e+09
+node_memory_inactive_bytes 2.147483648e+09
+node_memory_wired_bytes 6.442450944e+09
+node_memory_compressed_bytes 2.147483648e+09
+node_memory_swap_used_bytes 1.073741824e+09
+node_memory_swapped_in_pages_total 100000
+# HELP node_filesystem_size_bytes Filesystem size
+node_filesystem_size_bytes{device="/dev/disk1s1",fstype="apfs",mountpoint="/"} 9.94662584e+11
+node_filesystem_avail_bytes{device="/dev/disk1s1",fstype="apfs",mountpoint="/"} 4.294967296e+10
+node_filesystem_size_bytes{device="devfs",fstype="devfs",mountpoint="/dev"} 200704
+node_filesystem_avail_bytes{device="devfs",fstype="devfs",mountpoint="/dev"} 0
+# HELP node_network_receive_bytes_total Network bytes received
+node_network_receive_bytes_total{device="en0"} 2000000
+node_network_transmit_bytes_total{device="en0"} 900000
+node_network_receive_bytes_total{device="lo0"} 88888888
+node_network_receive_packets_total{device="en0"} 20000
+node_network_receive_errs_total{device="en0"} 2
+# HELP node_boot_time_seconds Node boot time
+node_boot_time_seconds 1.7566848e+09

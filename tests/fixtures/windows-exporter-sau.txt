@@ -1,0 +1,34 @@
+# HELP windows_cpu_time_total Time that processor spent in different modes
+# TYPE windows_cpu_time_total counter
+windows_cpu_time_total{core="0,0",mode="idle"} 848.0
+windows_cpu_time_total{core="0,0",mode="user"} 158.0
+windows_cpu_time_total{core="0,0",mode="privileged"} 50.0
+windows_cpu_time_total{core="0,1",mode="idle"} 868.0
+windows_cpu_time_total{core="0,1",mode="user"} 138.0
+windows_cpu_time_total{core="0,1",mode="privileged"} 50.0
+# HELP windows_system_processor_queue_length Length of processor queue
+# TYPE windows_system_processor_queue_length gauge
+windows_system_processor_queue_length 2
+# HELP windows_cs_physical_memory_bytes Total physical memory
+windows_cs_physical_memory_bytes 1.7179869184e+10
+windows_os_physical_memory_free_bytes 4.294967296e+09
+# HELP windows_logical_disk_size_bytes Total space
+windows_logical_disk_size_bytes{volume="C:"} 5.36870912e+11
+windows_logical_disk_free_bytes{volume="C:"} 5.36870912e+10
+windows_logical_disk_size_bytes{volume="D:"} 1.073741824e+12
+windows_logical_disk_free_bytes{volume="D:"} 8.589934592e+11
+windows_logical_disk_size_bytes{volume="HarddiskVolume1"} 1.048576e+08
+windows_logical_disk_free_bytes{volume="HarddiskVolume1"} 1.048576e+06
+# HELP windows_net_bytes_received_total Bytes received
+windows_net_bytes_received_total{nic="Intel_I219"} 1600000
+windows_net_bytes_sent_total{nic="Intel_I219"} 800000
+windows_net_bytes_received_total{nic="Loopback_Pseudo_Interface_1"} 99999999
+windows_net_packets_received_total{nic="Intel_I219"} 10000
+windows_net_packets_received_errors_total{nic="Intel_I219"} 5
+# HELP windows_system_system_up_time System boot time
+windows_system_system_up_time 1.7566848e+09
+# HELP windows_service_state Service state
+windows_service_state{name="MSSQLSERVER",state="running"} 1
+windows_service_state{name="MSSQLSERVER",state="stopped"} 0
+windows_service_state{name="Spooler",state="running"} 0
+windows_service_state{name="Spooler",state="stopped"} 1
