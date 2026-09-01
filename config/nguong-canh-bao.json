@@ -1,0 +1,64 @@
+{
+  "_ghiChu": "Ngưỡng và hằng số nghiệp vụ của hệ giám sát. Code ĐỌC từ đây, không hardcode (rule 4 module-boundaries). Nguồn số: BRD §6 nhóm B và C. Đổi ngưỡng là đổi hành vi hệ thống — ghi lý do vào commit.",
+  "_donVi": "phanTram = %, giay = giây, phut = phút, GB = gigabyte, ms = mili giây, ngay = ngày",
+
+  "phanCung": {
+    "cpuPhanTram":        { "canhCao": 85, "nghiemTrong": 95, "giuTrongPhut": 5 },
+    "ramPhanTram":        { "canhCao": 85, "nghiemTrong": 95, "giuTrongPhut": 2,
+                            "_macOS": "KHÔNG dùng % used trên macOS — cache rất hung, 90% là bình thường. Dùng memoryPressure + swapVaoMoiGiay bên dưới." },
+    "memoryPressureMacOS":{ "canhCao": "warn", "nghiemTrong": "critical", "giuTrongPhut": 2 },
+    "swapVaoMoiGiayMacOS":{ "canhCao": 1048576, "nghiemTrong": 10485760, "giuTrongPhut": 2 },
+    "diaPhanTramDung":    { "canhCao": 80, "nghiemTrong": 90, "giuTrongPhut": 15 },
+    "diaConLaiGB":        { "canhCao": 20, "nghiemTrong": 10, "giuTrongPhut": 15 },
+    "diaDuBaoDayNgay":    { "canhCao": 14, "nghiemTrong": 7,  "cuaSoHoiQuyNgay": 7 },
+    "diaDoTreMs":         { "canhCao": 20, "nghiemTrong": 50, "giuTrongPhut": 5 },
+    "mangLoiGoiPhanTram": { "canhCao": 0.1, "nghiemTrong": 1, "giuTrongPhut": 5 },
+    "mangBangThongPhanTram": { "canhCao": 80, "nghiemTrong": 95, "giuTrongPhut": 5 }
+  },
+
+  "ungDung": {
+    "httpThoiGianPhanHoiP95Ms": { "canhCao": 500, "nghiemTrong": 2000, "giuTrongPhut": 5,
+                                  "_nguon": "chuẩn Apdex: <500ms hài lòng, 500ms-2s chịu được, >2s bực" },
+    "httpSoLanFailLienTiep":    { "nghiemTrong": 3, "_nhip": "60 giây → báo sau ~180 giây" },
+    "sslConLaiNgay":            { "thongBao": 30, "canhCao": 14, "nghiemTrong": 7,
+                                  "_letsEncrypt": "chứng chỉ 90 ngày thì dùng 21/14/7" },
+    "tenMienConLaiNgay":        { "canhCao": 30, "nghiemTrong": 14 },
+    "dichVuBatBuoc":            { "nghiemTrong": "thieu-la-bao-ngay" },
+    "backupTrePhut":            { "graceGio": 4, "nghiemTrongSauSoChuKy": 2 },
+    "backupLechKichThuocPhanTram": { "canhCao": 30, "nghiemTrong": 60, "cuaSoTrungViNgay": 7 },
+    "csdlSoKetNoiPhanTram":     { "canhCao": 80, "nghiemTrong": 95, "giuTrongPhut": 5 }
+  },
+
+  "matLienLac": {
+    "collectorImLangPhut": 3,
+    "_ghiChu": "Đánh giá ở CLOUD, không ở collector — collector chết thì nó không tự báo được."
+  },
+
+  "chongNhieu": {
+    "hysteresisTatOPhanTramCuaNguong": 89,
+    "soMauBinhThuongDeTat": 3,
+    "gomNhomTrongGiay": 60,
+    "gioiHanEmailMoi5Phut": 10,
+    "cauDaoSoCanhBaoTrong5Phut": 20,
+    "_ghiChu": "hysteresisTatOPhanTramCuaNguong = 89 nghĩa là ngưỡng 90% thì chỉ tắt khi xuống dưới 90*0.89 ≈ 80%."
+  },
+
+  "leoThang": {
+    "quanTriNhanNgay": true,
+    "lanhDaoNhanSauPhutChuaXuLy": 30,
+    "_ghiChu": "Lãnh đạo CHỈ nhận khi mức nghiêm trọng chưa ai bấm 'Đã tiếp nhận' sau 30 phút."
+  },
+
+  "luuTru": {
+    "rawGiuNgay": 7,
+    "gop5PhutGiuNgay": 90,
+    "gop1GioGiuThang": 13,
+    "canhBaoDungLuongDbMB": 350,
+    "tranDungLuongDbMB": 500
+  },
+
+  "nghiemThu": {
+    "toiDaCanhBaoMoiTuan": 5,
+    "_ghiChu": "Vượt con số này nghĩa là engine cảnh báo đang hỏng, KHÔNG phải hạ tầng đang xấu."
+  }
+}
