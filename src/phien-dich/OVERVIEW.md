@@ -20,6 +20,31 @@ công cụ vẽ biểu đồ CPU.
 | `kieu.ts` | Kiểu dữ liệu. `AnhChup` = một dòng của `anh_chup_suc_khoe()`. `NhanDinh` phải trả lời đủ bốn câu. |
 | `luat-tuong-quan.ts` | 9 luật + `chonNguyenNhanGoc()` với **bốn chốt chặn**. |
 | `doc-cau-hinh.ts` | Nạp `config/phien-dich.json`. **Không có giá trị mặc định dự phòng** — thiếu khoá thì ném lỗi. |
+| `phat-hien.ts` | Đổi `alerts` → `PhatHien` (bảng ánh xạ chỉ số → mã + trụ), và `tuAnhChupSql()` đổi một dòng SQL → `AnhChup`. |
+| `soan-thu.ts` | Soạn tiêu đề + thân thư theo kim tự tháp ngược. |
+| `index.ts` | `phienDich()` — cửa duy nhất. Giao diện và email dùng CHUNG hàm này. |
+
+## Nối vào đầu ra: bước 6b
+
+`src/engine/vong-danh-gia.ts` gọi lớp này ở **bước 6b**, giữa "gom nhóm" và "leo thang":
+nó **viết đè** `than_thu` của thư chưa gửi. Cố ý đè lên thay vì soạn thẳng trong SQL —
+cỗ máy chống nhiễu (gom nhóm · ức chế · cầu dao) là logic tập hợp, SQL làm tốt và đã có
+11 test canh; còn viết văn tiếng Việt trong PL/pgSQL thì rất tệ.
+
+Ba tính chất phải giữ khi sửa bước này: `khoa_idempotency` không đổi · `where gui_luc is
+null` · bọc `try/catch` — **bước 6b hỏng thì thư CŨ VẪN GỬI**, và `TomTatVong.phien_dich_loi`
+nói rõ đã suy giảm chứ không im lặng.
+
+## Ba lỗi đã trả giá ở đây
+
+1. **Ánh xạ lệch âm thầm.** Luật khai nuốt mã `cpu_hang_doi` nhưng bảng ánh xạ sinh ra
+   `tai_cao` → mã chết, không bao giờ khớp, không có lỗi nào bật ra. Test
+   `phien-dich-noi-dau-ra` canh đúng chỗ này.
+2. **Hình dạng SQL ≠ TypeScript.** `anh_chup_suc_khoe()` gom danh sách vào `chi_so_them`
+   (jsonb); ép kiểu thẳng `as never` giấu chỗ khác nhau tới lúc chạy mới sập. Luôn đi qua
+   `tuAnhChupSql()`.
+3. **Khử trùng so nhầm không gian tên.** `goc.ma` là MÃ LUẬT, `p.ma` là MÃ PHÁT HIỆN —
+   so hai cái đó không bao giờ khớp, nên triệu chứng gốc bị in hai lần. So `chi_so`.
 
 ## Bốn chốt chặn — đừng gỡ cái nào
 
@@ -29,7 +54,11 @@ lặng** và trông rất gọn gàng.
 1. Luật phải **khai báo tường minh** nó nuốt mã nào. Không nuốt ngầm.
 2. Nhận định mức `phong_doan` chỉ được **xếp hạng**, không được nuốt.
 3. **Không bao giờ** nuốt `mat_lien_lac` — không đo được KHÁC với khoẻ.
-4. Chỉ nuốt **trong cùng một trụ**: "đĩa đầy" không được nuốt "sao lưu thất bại".
+4. Chỉ nuốt các **trụ đã KHAI BÁO** trong `tru_duoc_nuot` (mặc định: chỉ trụ của chính
+   luật). "Đĩa đầy" khai vắt qua bộ nhớ và bộ xử lý vì đó là dây chuyền nhân quả thật,
+   nhưng KHÔNG khai "sao lưu" — nên nó tuyệt đối không nuốt được "sao lưu thất bại".
+   Cấm tuyệt đối vắt trụ thì buộc phải gán triệu chứng bộ nhớ vào trụ lưu trữ, tức bóp
+   méo dữ liệu cho vừa luật.
 
 Kèm một chỉ số tự giám sát trong config (`tuGiamSat.tyLeGopToiDa`): gộp quá 70% số phát
 hiện thì hệ thống phải tự cảnh báo về chính nó.

@@ -43,19 +43,15 @@ bẫy này đã trả giá 3 lần (xem `CLAUDE.md`).
 
 ---
 
-## VIỆC CỦA ANH — nên làm trước khi thi công
+## VIỆC CỦA ANH — ✅ ĐÃ XONG (01/09/2026)
 
-Không phải hạng mục code. Nhưng máy đang ở tình trạng nguy cấp và **thi công trên máy
-thrashing sẽ chậm gấp nhiều lần** (đo thật: `du -sh ~/Library/Caches` chạy quá 5 phút).
+Đầu phiên máy còn **3,88 GB (98,3% đầy)**, swap phình 9,2 GB, chạy pin. Sau khi anh dọn:
+**37 GB trống (83,6%)**. Đủ chỗ để GĐ2 chạy dev server liên tục.
 
-- [ ] **Cắm sạc** — máy chủ đang chạy bằng pin 61%, còn 3h40.
-- [ ] **Tắt 6 tiến trình `chrome-headless-shell` sót từ phiên test** — đang ăn 41%+27%+15% CPU.
-- [ ] **Dọn 2 tệp video bỏ quên** ở `~/Library/ScreenRecordings`: 14,9 GB (17/01/2024) + 9,6 GB (07/03/2024) → **lấy lại 24,5 GB**.
-- [ ] **Xoá `~/.colima`** nếu không còn dùng Docker → **14 GB** (Colima hiện không chạy).
-- [ ] Mục tiêu: đĩa trống **≥ 30 GB**. Hiện còn **5,3 GB / 245 GB (97,8% đầy)**.
+- [x] Dọn `~/Library/ScreenRecordings` — 3 tệp ≥ 9 GB, mới nhất từ 01/2024, tổng **33 GB**.
+- [x] Khởi động lại để trả lại vùng nhớ tạm.
 
-> Đây là thao tác **ngoài thư mục dự án** → điểm DỪNG BẮT BUỘC theo `.claude/rules/workflow.md`.
-> Máy không tự làm. Máy chỉ đưa số và lệnh.
+Nếu đĩa tụt lại: đường dẫn cụ thể đã ghi ở mục CẢNH BÁO của `CLAUDE.md` để khỏi dò lại.
 
 ---
 
@@ -120,7 +116,7 @@ cần làm theo thứ tự, và hệ quả nếu không làm gì. Không còn c�
   - (c) `tests/nguong-dia.test.ts` (đĩa theo % và theo GB tuyệt đối đều bắn đúng) · `tests/nguong-theo-he-dieu-hanh.test.ts` (máy macOS 92% RAM **không** sinh cảnh báo, máy Windows 92% RAM **có**) · `tests/du-bao-noi-vao-vong.test.ts` (ổ sắp đầy 6 ngày → có cảnh báo, không chỉ có hàm chạy được).
   - (d) 1 ngày
 
-- [ ] 🔴 **1.3 — Luật tương quan: gộp triệu chứng về một nguyên nhân gốc** (dở — dừng ở: engine + 13 test xanh, CHƯA nối vào email/giao diện nên (b) chưa bấm được)
+- [x] 🔴 **1.3 — Luật tương quan: gộp triệu chứng về một nguyên nhân gốc**
   - (a) Đây là thứ biến hệ này từ máy đo thành trợ lý. Tạo `src/phien-dich/luat-tuong-quan.ts` — **9 luật cho macOS**, mỗi luật có: điều kiện **bắt buộc** (đủ hết mới nổ) · điều kiện **củng cố** (mỗi cái đúng nâng độ tin cậy một bậc: phỏng đoán → nhiều khả năng → chắc chắn) · danh sách mã **nuốt** · cờ `gộp hành động vào gốc`. Ưu tiên và bật/tắt đọc từ `config/phien-dich.json`; **số học ở TypeScript, hằng số ở JSON** — không làm DSL điều kiện trong JSON vì nó không typecheck được và sẽ thành ngôn ngữ lập trình thứ hai không ai bảo trì nổi.
   - (a2) **Luật số 1 chính là ca máy này** (`dia-day-keo-sup-bo-nho`, ưu tiên 100): `đĩa còn ≤ 10 GB hoặc đã dùng ≥ 95%` **VÀ** `swap dùng ≥ 80%`; ba điều kiện củng cố: `tải/nhân ≥ 0,4 trong khi CPU rảnh ≥ 60%` · `vùng nhớ ảo trên đĩa ≥ 5 GB` · `bộ nhớ trống ≤ 3%`. Máy anh khớp **3/3 → chắc chắn**, nuốt 4 triệu chứng.
   - (a3) 🔴 **Bốn chốt chặn nuốt quá tay** (xem mục Rủi ro ở cuối file) — đây là phần dễ bị bỏ qua nhất và cũng là phần nguy hiểm nhất nếu thiếu. Kèm cơ chế **"một gốc để BÁO, nhiều đòn bẩy để LÀM"**: luật thua nhưng có cờ `gộp hành động vào gốc` vẫn góp việc vào danh sách — ví dụ "6 tiến trình trình duyệt còn sót" thua luật đĩa nhưng vẫn phải nằm trong việc cần làm vì nó trả lại ~2 GB bộ nhớ.
@@ -133,7 +129,6 @@ cần làm theo thứ tự, và hệ quả nếu không làm gì. Không còn c�
   - (b) Mở dashboard: cột "Việc" hiện **"Mức dùng bộ xử lý"**, kèm số đo có mốc so sánh **"97% ▸ ngưỡng 95%"** (hai cột `alerts.gia_tri`/`alerts.nguong` đã có từ `0001` mà giao diện chưa hề đọc).
   - (c) `tests/tu-dien-day-du.test.ts` — mọi `chi_so` hệ có thể sinh (lấy từ `danh_sach_chi_so_nguong()` + các mã cố định `mat_lien_lac`, `dich_vu:`, `cong_viec:`, `csdl:`) đều có mục trong từ điển. Thiếu một mã là fail.
   - (d) 0,5 ngày
-  - (e) chặn: MÁY
 
 - [ ] **1.5 — Điểm sức khỏe hệ thống**
   - (a) `src/phien-dich/diem-suc-khoe.ts` — một số 0–100 kèm **câu giải thích vì sao**. **Sáu trụ** có trọng số: chỗ lưu trữ 25 · bộ nhớ 25 (hai trụ này nặng nhất vì hỏng của chúng **không tự hồi phục theo thời gian**) · bộ xử lý 15 (bận 100% vẫn *đang phục vụ*, chỉ chậm) · nguồn điện 15 (chạy pin = một cái hẹn giờ tắt máy) · mạng & dịch vụ 10 · sao lưu 10. Điểm mỗi trụ tính bằng hàm bậc thang bốn mốc, mọi mốc đọc từ `config/`. Trụ có nhiều chỉ số thì **lấy `min`, không lấy trung bình**.

@@ -14,6 +14,22 @@ import { chayMotVong, tomTatMotDong } from "../engine/vong-danh-gia";
 import type { Transport } from "../email/gui-email";
 import { taoPartitionNgay } from "./nap-migration";
 import { docNguongDuBaoDia } from "./nap-cau-hinh";
+import { docCauHinhPhienDich } from "../phien-dich/doc-cau-hinh";
+
+/**
+ * Ngưỡng mà hàm SQL `anh_chup_suc_khoe()` cần, lấy từ `config/phien-dich.json`.
+ * Truyền bằng THAM SỐ chứ không viết số trong SQL — ngưỡng vô hình trong SQL là thứ sửa
+ * config không có tác dụng mà không ai biết.
+ */
+function nguongTuongQuanChoSql() {
+  const n = docCauHinhPhienDich().nguongTuongQuan;
+  return {
+    diaConLaiGb: 10,
+    swapTyLe: 0.8,
+    taiMoiNhan: n.taiMoiNhan,
+    cpuRanhToiThieu: n.cpuRanhToiThieuDeCoiLaNghenIO,
+  };
+}
 
 const NHIP_MS = 60_000;
 
@@ -132,6 +148,8 @@ export function batDauDoLienTuc(db: PGlite, hostId: string): void {
       const t = await chayMotVong(db, {
         transport: transportInRaManHinh,
         duBaoDia: docNguongDuBaoDia(),
+        // Bật lớp phiên dịch: thư nói bằng NGUYÊN NHÂN GỐC thay vì liệt kê triệu chứng.
+        phienDich: { cauHinh: docCauHinhPhienDich(), nguong: nguongTuongQuanChoSql() },
       });
       console.log(`[giám sát] ${tomTatMotDong(t)}`);
     } catch (e) {

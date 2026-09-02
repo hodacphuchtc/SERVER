@@ -46,47 +46,49 @@ Quyết định kiến trúc: `docs/decisions/ADR-*`. Stack: Next.js (App Router
 - Chi tiết: `.claude/rules/` (workflow, security, module-boundaries, tech-defaults,
   ngon-ngu-ui).
 
-## TRẠNG THÁI (cập nhật 01/09/2026)
+## TRẠNG THÁI (cập nhật 01/09/2026 — cuối phiên 2)
+
+🔴 **Lộ trình đang chạy là `PLAN_V2.md`.** `PLAN.md` giữ làm hồ sơ GĐ0–GĐ7 đã xong.
+Bàn giao chi tiết cho phiên sau: khối "BÀN GIAO PHIÊN GẦN NHẤT" ở đầu `PLAN.md`.
 
 ### ĐÃ XONG
 
-- **GĐ0** khung + BRD + 3 ADR + nền test (PGlite).
-- **GĐ2–6 phần MÁY**: thu thập 2 nền tảng · lưu trữ 3 tầng · engine ngưỡng có
-  duration/hysteresis · chống nhiễu (gom nhóm, ức chế, giới hạn, cầu dao) · leo thang phân
-  tầng · ack/MTTR · dự báo đầy đĩa · giám sát dịch vụ/backup/CSDL · email cho lãnh đạo ·
-  phân quyền 3 vai chặn ở RLS · giao diện 3 trang.
-- **GĐ7** vòng đánh giá nối các mảnh · Cloudflare Worker · route tiếp nhận · SOP vận hành ·
-  đo và giám sát THẬT máy đang chạy.
-- **191 test xanh**, typecheck + build exit 0. Đã push `cac5ab2` lên
-  https://github.com/hodacphuchtc/SERVER.
+- **PLAN.md GĐ0–GĐ7** (phiên 1): thu thập 2 nền tảng · lưu trữ 3 tầng · engine ngưỡng có
+  duration/hysteresis · chống nhiễu · leo thang · ack/MTTR · dự báo đầy đĩa · giám sát
+  dịch vụ/backup/CSDL · phân quyền RLS · giao diện 3 trang · vòng đánh giá · Worker · SOP.
+- **PLAN_V2 GĐ0 trọn vẹn** (0.1–0.4): sửa 3 lỗi ĐO (đĩa báo 69,8% thay vì 97,8% · áp lực
+  bộ nhớ trả "normal" khi đang thrashing · `kern.num_threads` là TRẦN không phải số đếm),
+  thêm 15 chỉ số macOS, migration `0012` (cột + chốt chặn dữ liệu cá nhân) và `0013`
+  (`anh_chup_suc_khoe()` — một dòng mỗi máy, độ bền bỉ bằng gaps-and-islands).
+- **PLAN_V2 1.1 + 1.2**: `alerts` có cột văn bản nên câu diễn giải đi được tới người đọc ·
+  engine đọc đủ ngưỡng (đĩa theo % và theo GB, swap, áp lực bộ nhớ, tải, pin, nhiệt) ·
+  ngưỡng tách theo hệ điều hành (bỏ `ram_phan_tram` cho macOS) · `du_bao_day_dia()` cuối
+  cùng cũng có người gọi · email có nút "Đã tiếp nhận" ký HMAC.
+- **246 test xanh** (từ 191), typecheck exit 0. Đã push 3 commit: `e2b0726`, `0eccf3b`,
+  `128c96e`. **Tiến độ PLAN_V2: 6/24 hạng mục — 25%.**
 
 ### ĐANG DỞ
 
-- **PLAN_V2.md** (lộ trình MVP mới, duyệt 01/09/2026): xong GĐ0 trọn vẹn (4/4) và
-  GĐ1 hạng mục 1.1 + 1.2. Còn 1.3 (luật tương quan), 1.4 (từ điển), 1.5 (điểm sức khỏe),
-  rồi GĐ2–GĐ5. Toàn bộ test xanh sau mỗi hạng mục.
+- **PLAN_V2 hạng mục 1.3** `(dở)` — engine luật tương quan XONG, 13 test xanh
+  (`src/phien-dich/luat-tuong-quan.ts`), nhưng **chưa nối vào email/giao diện** nên dòng (b)
+  chưa bấm được. Không tick theo cảm giác.
 
 ### BƯỚC TIẾP THEO (theo thứ tự)
 
-1. **PLAN_V2 hạng mục 1.3** — luật tương quan: gộp "đĩa đầy + swap cao + RAM cạn + tải cao
-   trong khi CPU rảnh" thành MỘT nguyên nhân gốc. Máy thật hiện đẻ 3 cảnh báo cho cùng
-   một sự cố — đã đo được, xem mục CẢNH BÁO.
-2. **1.4 từ điển hiển thị** và **1.5 điểm sức khỏe**.
-3. **GĐ2 — dashboard** (7 hạng mục).
+1. **Nối 1.3 vào đầu ra** — chèn bước 6b vào `src/engine/vong-danh-gia.ts`, viết đè
+   `than_thu` bằng nhận định gốc. Khuôn đã ghi ở PLAN_V2 mục 1.1(a2). Lệnh: `/B3_thi_cong`.
+2. **1.4 từ điển hiển thị** (`config/tu-dien-giao-dien.json`) và **1.5 điểm sức khỏe**
+   (trần cứng, không dùng trọng số lớn).
+3. **GĐ2 — dashboard**, 7 hạng mục. (Đĩa đã dọn: 37,7 GB trống — chạy dev server thoải mái.)
 
-### CHỜ NGOÀI (thiếu key/env/dịch vụ — ghi vào đây rồi làm tiếp, đừng dừng)
+### CHỜ NGOÀI (chỉ còn 2 — đã giảm từ 7)
 
-Bảy thứ đang chặn, xếp theo mức độ chặn nhiều hạng mục nhất:
+Bối cảnh mới đã chốt: **một máy macOS**, bỏ tách vai lãnh đạo, bỏ nhánh Windows và Uptime
+Kuma khỏi phạm vi v2 (xem PLAN_V2 mục "KHÔNG LÀM"). Năm mục chờ cũ vì thế không còn hiệu lực.
 
-1. **Danh sách URL/dịch vụ nội bộ + một tài khoản SMTP** — *chặn 1.1.*
-2. **Quyền chạy Docker trên một máy nội bộ** — *chặn 1.1, 1.2.*
-3. **Quyền cài phần mềm trên máy Mac và Windows** (`node_exporter`, `windows_exporter`) —
-   *chặn 2.1, 2.4.*
-4. **Thông tin các job backup** (chạy ở đâu, tên script, chu kỳ) — *chặn 1.2, 4.2.*
-5. **Danh sách dịch vụ bắt buộc** + **tên nghiệp vụ cho từng máy** — *chặn 4.1, 5.2.*
-6. **Tài khoản Cloudflare + Resend** + **một tên miền** (SPF/DKIM/DMARC cho
-   `alerts.<tenmien>`) — *chặn 2.2, 3.4, 6.1.*
-7. **Tài khoản kết nối CSDL chỉ đọc** — *chặn 4.3.*
+1. **Tài khoản CSDL chỉ đọc** — *chặn 3.3.*
+2. **Tên script backup + chu kỳ**, và thêm một dòng ping vào script — *chặn 3.4.*
+3. *(NGOÀI)* **Khoá Resend + một tên miền** — *chặn 4.2. Phần soạn thư làm được ngay.*
 
 ## QUYẾT ĐỊNH QUAN TRỌNG
 
@@ -99,6 +101,11 @@ Bảy thứ đang chặn, xếp theo mức độ chặn nhiều hạng mục nh�
 | 01/09/2026 | PGlite làm nền test VÀ nguồn dữ liệu cho giao diện | Postgres thật chạy trong Node ⇒ test migration + RLS thật, và `npm run dev` xem được ngay mà không cần Docker lẫn tài khoản Supabase |
 | 01/09/2026 | Chế độ `GIAM_SAT_DO_MAY_NAY=1` đo chính máy đang chạy bằng lệnh macOS | Xem được cả dây chuyền hoạt động trên một máy CÓ THẬT trước khi có tài khoản nào — và chính nó lộ ra 5 lỗi mà fixture không bắt được |
 | 01/09/2026 | Bump `next` 15.1.3 → 15.5.25 | npm cảnh báo CVE-2025-66478 ở bản cũ |
+| 01/09/2026 | Phạm vi v2: MỘT máy macOS, bỏ tách vai lãnh đạo | Người dùng vừa là kỹ thuật vừa ra quyết định; BRD cũ giả định 2–6 máy văn phòng + CEO — giả định đó không đúng thực tế, và nó là gốc của 5/7 mục "chờ ngoài" |
+| 01/09/2026 | Lớp phiên dịch HYBRID: SQL trả sự thật, TypeScript ra nhận định | Worker Cloudflare trần 10ms CPU nên phép nặng phải ở Postgres; nhưng viết văn tiếng Việt trong PL/pgSQL rất tệ và làm ở hai nơi sẽ lệch sau đúng một lần sửa |
+| 01/09/2026 | Hằng số ở JSON, SỐ HỌC ở TypeScript | DSL điều kiện trong JSON không typecheck được, không test được, và sẽ thành ngôn ngữ lập trình thứ hai không ai bảo trì nổi |
+| 01/09/2026 | Ngưỡng truyền vào hàm SQL bằng THAM SỐ, không viết số trong SQL | `coalesce(..., 10)` trong SQL chính là ngưỡng vô hình: sửa `config/` không có tác dụng mà không ai biết |
+| 01/09/2026 | Điểm sức khỏe dùng TRẦN CỨNG, không dùng trọng số lớn | Tăng trọng số chỉ làm chậm việc pha loãng: 6 trụ, một trụ 0 điểm trọng số 25 vẫn ra tổng 75 — mà 75 điểm thì không ai đi xử lý |
 
 ## CẢNH BÁO / CẠM BẪY (đã trả giá, đừng lặp lại)
 
@@ -125,3 +132,13 @@ Bảy thứ đang chặn, xếp theo mức độ chặn nhiều hạng mục nh�
 - **Mọi bộ phận xanh không có nghĩa hệ thống chạy.** Trước GĐ7, `grep` cho thấy không file
   nguồn nào gọi các hàm SQL theo trình tự; `soat_cong_viec()` chỉ trả về vấn đề rồi rơi
   vào hư không nên backup trễ không bao giờ thành email.
+- **TEST CŨ CÓ THỂ XANH VÌ LÝ DO SAI — sửa TEST, đừng sửa code cho vừa test.** Ba test từng
+  đòi email phải chứa mã snake_case (`cpu_phan_tram`, `cong_viec:...`), và một test khẳng
+  định đĩa 71,7% trong khi cột `Capacity` của chính fixture đó ghi 98%. Trước khi sửa code
+  vì test đỏ, hỏi: **test này có đang mã hoá một cái lỗi không?**
+- **DỌN ĐĨA MÁY NÀY** (đo 01/09/2026, đường dẫn để khỏi dò lại):
+  `~/Library/ScreenRecordings` **33 GB / 5 tệp**, ba tệp lớn nhất là
+  `DD115C0F-…` 14 GB (17/01/2024) · `0BBE5A2D-…` 10 GB (29/04/2023) ·
+  `64FE7AB4-…` 9 GB (07/03/2024) — vào bằng `Cmd+Shift+G` rồi dán `~/Library/ScreenRecordings`.
+  Thêm `~/.colima` 14 GB (Colima KHÔNG chạy) · `Application Support`: Claude 10 GB, Zalo 9,6 GB.
+  **Không có snapshot Time Machine cục bộ** — đĩa đầy là thật, không có gì dễ xoá.

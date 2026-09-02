@@ -1,34 +1,42 @@
 # PLAN.md — Lộ trình GIAM_SAT_SERVER (khởi tạo 01/09/2026)
 
-## BÀN GIAO PHIÊN GẦN NHẤT (01/09/2026 — ghi đè mỗi phiên)
+## BÀN GIAO PHIÊN GẦN NHẤT (01/09/2026 — GHI ĐÈ mỗi phiên, không nối thêm)
 
-1. **Vừa xong:** GĐ7 trọn vẹn (7.1 vòng đánh giá · 7.2 Worker + route tiếp nhận · 7.3 SOP ·
-   7.4 đo máy thật). 191 test xanh, typecheck/build exit 0. **Đã push** `cac5ab2` lên
-   https://github.com/hodacphuchtc/SERVER (repo PUBLIC — chưa bật Secret Scanning).
+> 🔴 **Lộ trình đang chạy là `PLAN_V2.md`**, không phải file này. PLAN.md giữ làm hồ sơ
+> GĐ0–GĐ7 đã xong. Mọi hạng mục mới đọc và tick ở PLAN_V2.md.
 
-2. **Đang dở:** không có mục nào dở giữa chừng. 12 mục `[~]` đều đã xong phần code + test,
-   chỉ chờ tài khoản/máy thật để nghiệm thu — mỗi mục ghi rõ "CHỜ: ..." ngay trong dòng.
+1. **Vừa xong:** PLAN_V2 GĐ0 trọn vẹn (0.1–0.4) + GĐ1 hạng mục 1.1, 1.2.
+   **Đã push 3 commit**: `e2b0726` · `0eccf3b` · `128c96e`. 191 → **246 test xanh**,
+   typecheck exit 0. Tiến độ PLAN_V2: **6/24 hạng mục (25%)**.
 
-3. **Chặn ở NGƯỜI/NGOÀI:** 1.1 + 1.2 cần danh sách URL nội bộ, tài khoản SMTP, quyền chạy
-   Docker, thông tin job backup · 6.1 cần tài khoản Cloudflare · 3.4 cần khoá Resend + tên
-   miền · 4.1–4.3 cần danh sách dịch vụ, sửa script backup, tài khoản CSDL chỉ đọc.
+2. **ĐANG DỞ — làm tiếp từ đây:** hạng mục **1.3** ghi `(dở)`. Engine luật tương quan xong
+   và 13 test xanh (`src/phien-dich/luat-tuong-quan.ts`, `tests/phien-dich-tuong-quan.test.ts`),
+   NHƯNG chưa nối vào đầu ra nên dòng (b) chưa bấm được.
+   **Việc tiếp theo:** chèn bước 6b vào `src/engine/vong-danh-gia.ts` — gọi
+   `chonNguyenNhanGoc()` rồi VIẾT ĐÈ `than_thu` của `alert_notifications` trước bước gửi
+   (giữ `khoa_idempotency`, thêm `where gui_luc is null`, bọc try/catch: bước này lỗi thì
+   thư cũ vẫn phải gửi). Khuôn thiết kế đã ghi sẵn ở PLAN_V2 mục 1.1(a2).
 
-4. **Đã đo, ĐỪNG đo lại:**
-   - Bundle giao diện **103 kB** so với trần 3 MB nén → rủi ro 6.1 coi như đã tháo.
-   - `next@15.1.3` dính CVE-2025-66478; đã lên **15.5.25** (bản vá cuối nhánh 15.x).
-   - PGlite chạy Postgres thật trong Node ⇒ test được migration + RLS mà **không cần Docker
-     lẫn tài khoản Supabase**. Đây là nền của cả 19 file test.
-   - Máy MacBook Air M1 này: ổ còn ~4 GB (chạm ngưỡng nghiêm trọng 10 GB), RAM 84%, swap 5 GB.
+3. **Chặn ở NGƯỜI:** 3.3 cần tài khoản CSDL **chỉ đọc** · 3.4 cần tên script backup + chu kỳ.
+   **Chặn ở NGOÀI:** 4.2 cần khoá Resend + tên miền. Mọi hạng mục còn lại là MÁY, làm được ngay.
+   ✅ **Đĩa đã dọn xong cuối phiên: 37,7 GB trống (83,3%)**, từ 3,88 GB. GĐ2 chạy dev server
+   liên tục được rồi. Nếu tụt lại: đường dẫn dọn ở mục CẢNH BÁO của `CLAUDE.md`.
 
-5. **Cạm bẫy vừa trả giá** (chi tiết ở mục CẢNH BÁO của `CLAUDE.md`): đọc exit code chứ
-   không đọc dòng cuối output · không chạy `npm install` chồng lên tiến trình đang chạy ·
-   `new URL(..., import.meta.url)` vỡ dưới webpack · **chạy trên máy thật lộ 5 lỗi mà 184
-   test và toàn bộ fixture không bắt được**.
+4. **Đã đo, ĐỪNG đo lại:** bundle 103 kB / trần 3 MB · PGlite = Postgres thật, test
+   migration + RLS không cần Docker · `~/Library/ScreenRecordings` **33 GB, 3 tệp ≥ 9 GB,
+   mới nhất 01/2024** · `~/.colima` 14 GB (Colima KHÔNG chạy) · **không có snapshot Time
+   Machine** — đĩa đầy là thật · `launchctl`: 516 nhãn, 187 mã `-9` bình thường, chỉ **2**
+   lỗi thật · `diaConLaiGB` = **20 GB cảnh cáo / 10 GB nghiêm trọng**, nên 16 GB LÀ cảnh báo.
+
+5. **Cạm bẫy vừa trả giá** — 3 bài học mới đã ghi vào mục CẢNH BÁO của `CLAUDE.md`
+   (báo nhẹ hơn thực tế · ngưỡng khai mà không ai đọc · mã thoát âm không phải lỗi).
+   Thêm: **test cũ có thể xanh vì lý do sai** — 3 test từng đòi email chứa mã snake_case,
+   phải sửa test chứ không sửa code cho vừa test.
 
 6. **Lệnh phiên sau nên chạy:**
    ```bash
-   npm test && npm run typecheck        # 191 test, phải xanh trước khi sửa gì
-   GIAM_SAT_DO_MAY_NAY=1 npm run start  # giám sát thật máy này, xem ở localhost:3000
+   npm test && npm run typecheck   # 246 test, phải xanh trước khi sửa gì
+   npx vitest run tests/phien-dich-tuong-quan.test.ts   # 13 test của lớp phiên dịch
    ```
 
 ---

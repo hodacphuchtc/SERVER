@@ -31,16 +31,22 @@ const MAY_NAY: AnhChup = {
   so_canh_bao_dang_mo: 3, co_nghiem_trong_chua_nhan: true,
 };
 
-/** Ba triệu chứng mà engine hiện đang báo rời rạc cho cùng một sự cố. */
+/**
+ * Bốn triệu chứng mà engine đang báo rời rạc cho cùng một sự cố.
+ *
+ * Mỗi cái nằm ở TRỤ THẬT của nó — swap và áp lực bộ nhớ thuộc trụ bộ nhớ, tải thuộc trụ
+ * bộ xử lý. Không gán bừa hết vào trụ lưu trữ cho vừa luật: luật phải khai báo được nó
+ * vắt qua trụ nào, chứ không phải dữ liệu bị bóp méo cho khớp luật.
+ */
 const TRIEU_CHUNG: PhatHien[] = [
   { ma: "swap_cao", chi_so: "swap_dung_ty_le", gia_tri: 0.878, nguong: 0.8,
-    muc: "nghiem_trong", tru: "cho_luu_tru", cau: "Vùng nhớ tạm đã dùng 87,8%." },
+    muc: "nghiem_trong", tru: "bo_nho", cau: "Vùng nhớ tạm đã dùng 87,8%." },
   { ma: "ap_luc_bo_nho", chi_so: "ap_luc_bo_nho", gia_tri: 2, nguong: 2,
-    muc: "nghiem_trong", tru: "cho_luu_tru", cau: "Bộ nhớ đã cạn." },
+    muc: "nghiem_trong", tru: "bo_nho", cau: "Bộ nhớ đã cạn." },
   { ma: "dia_phan_tram", chi_so: "dia_phan_tram_dung", gia_tri: 98.3, nguong: 90,
     muc: "nghiem_trong", tru: "cho_luu_tru", cau: "Ổ đĩa đã dùng 98,3%." },
   { ma: "tai_cao", chi_so: "cpu_hang_doi", gia_tri: 2.82, nguong: null,
-    muc: "canh_cao", tru: "cho_luu_tru", cau: "Có 2,8 việc đang xếp hàng chờ." },
+    muc: "canh_cao", tru: "bo_xu_ly", cau: "Có 2,8 việc đang xếp hàng chờ." },
 ];
 
 const chon = (f: AnhChup, ph: PhatHien[] = TRIEU_CHUNG) => chonNguyenNhanGoc(f, ph, CFG);
@@ -89,7 +95,7 @@ describe("1.3 — luật tương quan: bốn triệu chứng là MỘT sự cố
   it("🔴 CHỐT ③: KHÔNG BAO GIỜ nuốt 'mất liên lạc' — máy im lặng luôn phải báo riêng", () => {
     const matLienLac: PhatHien = {
       ma: "mat_lien_lac", chi_so: "mat_lien_lac", gia_tri: 12, nguong: 3,
-      muc: "nghiem_trong", tru: "cho_luu_tru", cau: "Máy đã ngừng gửi số liệu 12 phút.",
+      muc: "nghiem_trong", tru: "bo_nho", cau: "Máy đã ngừng gửi số liệu 12 phút.",
     };
     // Cố tình đặt CÙNG TRỤ với gốc và thêm vào danh sách nuốt để chứng minh chốt ③ chặn
     // được kể cả khi ba chốt kia đều cho qua.
@@ -179,5 +185,29 @@ describe("1.3 — luật tương quan: bốn triệu chứng là MỘT sự cố
     } };
     const kq = chonNguyenNhanGoc(MAY_NAY, TRIEU_CHUNG, tat);
     expect(kq.goc!.ma).not.toBe("dia-day-keo-sup-bo-nho");
+  });
+});
+
+describe("thứ tự việc cần làm — hiệu quả trên mỗi phút, không phải hiệu quả thô", () => {
+  it("🔴 việc 2 phút phải đứng TRƯỚC việc 8 tiếng, dù hiệu quả tuyệt đối nhỏ hơn", () => {
+    // Đo trên máy thật: sắp theo hiệu quả thô cho ra "Cân nhắc nâng dung lượng bộ nhớ
+    // (~480 phút, cần duyệt chi)" đứng trước "Đóng bớt ứng dụng (~2 phút)". Người đang
+    // xử lý sự cố cần việc làm được NGAY ở đầu danh sách.
+    const ds = xepUuTien([
+      { ma: "nang-bo-nho", viec: "Nâng bộ nhớ", rui_ro: "can_can_nhac",
+        giai_thich_rui_ro: "", phut_uoc_tinh: 480, hieu_qua: "", hieu_qua_uoc_luong: 50,
+        can_khoi_dong_lai: false },
+      { ma: "dong-ung-dung", viec: "Đóng bớt ứng dụng", rui_ro: "thap",
+        giai_thich_rui_ro: "", phut_uoc_tinh: 2, hieu_qua: "", hieu_qua_uoc_luong: 3,
+        can_khoi_dong_lai: false },
+    ]);
+    expect(ds.map((h) => h.ma)).toEqual(["dong-ung-dung", "nang-bo-nho"]);
+  });
+
+  it("việc cần duyệt chi luôn nằm CUỐI danh sách của nguyên nhân gốc", () => {
+    const kq = chon(MAY_NAY);
+    const ds = kq.goc!.hanh_dong;
+    const iThemO = ds.findIndex((h) => h.rui_ro === "can_can_nhac");
+    if (iThemO >= 0) expect(iThemO).toBe(ds.length - 1);
   });
 });

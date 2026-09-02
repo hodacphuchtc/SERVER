@@ -35,6 +35,14 @@ export type TuyChonVong = {
    * Nguồn sự thật: config/nguong-canh-bao.json → phanCung.diaDuBaoDayNgay.
    */
   duBaoDia?: { canhCaoNgay: number; nghiemTrongNgay: number; cuaSoNgay?: number };
+  /**
+   * Bật lớp phiên dịch viết đè thân thư (bước 6b). Không truyền thì thư giữ nguyên định
+   * dạng do SQL soạn — vẫn đọc được, chỉ là không có nguyên nhân gốc và danh sách hành động.
+   */
+  phienDich?: {
+    cauHinh: import("../phien-dich/luat-tuong-quan").CauHinhPhienDich;
+    nguong: { diaConLaiGb: number; swapTyLe: number; taiMoiNhan: number; cpuRanhToiThieu: number };
+  };
 };
 
 export type TomTatVong = {
@@ -48,9 +56,18 @@ export type TomTatVong = {
   thong_bao: { loai: string | null; so_canh_bao: number };
   leo_thang: number;
   email: { da_gui: number; that_bai: number };
+  /** Khác null nghĩa là bước 6b hỏng và thư đi ra ở dạng thô — KHÔNG được im lặng. */
+  phien_dich_loi: string | null;
 };
 
 type CoHanhDong = { hanh_dong: string };
+
+/** Một dòng của anh_chup_suc_khoe() — khớp kiểu AnhChup của lớp phiên dịch. */
+type AnhChupRow = Record<string, unknown> & { host_id: string };
+type DongCanhBaoRow = {
+  id: string; chi_so: string; muc: string;
+  gia_tri: number | null; nguong: number | null; dien_giai: string | null;
+};
 
 const dem = (rows: CoHanhDong[]) => ({
   mo: rows.filter((r) => r.hanh_dong === "mo_canh_bao").length,
@@ -125,9 +142,58 @@ export async function chayMotVong(db: PGlite, tuyChon: TuyChonVong): Promise<Tom
     : { rows: [] as CoHanhDong[] };
 
   // ── 6. Gom nhóm + ức chế + giới hạn tốc độ + cầu dao → ghi vào outbox.
-  const thongBao = await db.query<{ loai: string; so_canh_bao: number }>(
-    `select loai, so_canh_bao from public.soan_thong_bao($1::timestamptz)`, [moc],
+  const thongBao = await db.query<{ loai: string; so_canh_bao: number; khoa: string | null }>(
+    `select loai, so_canh_bao, khoa from public.soan_thong_bao($1::timestamptz)`, [moc],
   );
+  const thongBaoKhoa = thongBao.rows[0]?.khoa ?? null;
+
+  // ── 6b. LỚP PHIÊN DỊCH viết đè thân thư.
+  //
+  // Vì sao ĐÈ LÊN thay vì soạn thẳng trong SQL: gom nhóm / ức chế / cầu dao là logic TẬP
+  // HỢP, SQL làm tốt và đã có 11 test canh — không đụng vào. Còn viết một câu tiếng Việt
+  // có nguyên nhân gốc + hành động thì PL/pgSQL làm rất tệ, và làm ở hai nơi thì chúng sẽ
+  // lệch nhau sau đúng một lần sửa.
+  //
+  // Ba tính chất được giữ nguyên: `khoa_idempotency` không đổi (chống trùng còn nguyên) ·
+  // `where gui_luc is null` (chạy lại vô hại) · và bọc try/catch — bước này hỏng thì thư
+  // CŨ VẪN GỬI, vì một email thô còn hơn không có email nào.
+  let phienDichLoi: string | null = null;
+  if (tuyChon.phienDich && thongBao.rows[0]?.loai === "canh_bao") {
+    try {
+      const { phienDich, soanThanThu, soanTieuDe, tuAnhChupSql } =
+        await import("../phien-dich/index.js");
+      const { cauHinh, nguong } = tuyChon.phienDich;
+
+      const anhChup = await db.query<AnhChupRow>(
+        `select * from public.anh_chup_suc_khoe($1, $2, $3, $4, null, $5::timestamptz)`,
+        [nguong.diaConLaiGb, nguong.swapTyLe, nguong.taiMoiNhan, nguong.cpuRanhToiThieu, moc],
+      );
+
+      for (const may of anhChup.rows) {
+        const canhBao = await db.query<DongCanhBaoRow>(
+          `select a.id, a.chi_so, a.muc, a.gia_tri, a.nguong, a.dien_giai
+             from public.alerts a
+            where a.host_id = $1 and a.ket_thuc_luc is null
+            order by a.muc desc, a.chi_so`,
+          [may.host_id],
+        );
+        if (canhBao.rows.length === 0) continue;
+
+        // Chuyển đổi tường minh: hình dạng SQL và TypeScript khác nhau, và ép kiểu
+        // thẳng (`as never`) sẽ giấu chỗ khác nhau đó cho tới lúc chạy mới sập.
+        const bc = phienDich(tuAnhChupSql(may), canhBao.rows, cauHinh);
+        await db.query(
+          `update public.alert_notifications
+              set tieu_de = $2, than_thu = $3
+            where khoa_idempotency = $1 and gui_luc is null`,
+          [thongBaoKhoa, soanTieuDe(bc), soanThanThu(bc)],
+        );
+      }
+    } catch (e) {
+      // Ghi lại để tóm tắt một dòng nói được là đã SUY GIẢM, chứ không im lặng.
+      phienDichLoi = e instanceof Error ? e.message : String(e);
+    }
+  }
 
   // ── 7. Leo thang lên lãnh đạo nếu nghiêm trọng mà chưa ai nhận.
   const leoThang = await db.query(
@@ -175,6 +241,7 @@ export async function chayMotVong(db: PGlite, tuyChon: TuyChonVong): Promise<Tom
     },
     leo_thang: leoThang.rows.length,
     email: { da_gui: ketQuaEmail.da_gui, that_bai: ketQuaEmail.that_bai },
+    phien_dich_loi: phienDichLoi,
   };
 }
 
@@ -186,6 +253,7 @@ export function tomTatMotDong(t: TomTatVong): string {
     return `${t.luc} · không có gì thay đổi`;
   }
   return `${t.luc} · mở ${mo} · đóng ${dong} · email gửi ${t.email.da_gui}` +
+         (t.phien_dich_loi ? ` · PHIÊN DỊCH HỎNG, thư gửi dạng thô: ${t.phien_dich_loi}` : "") +
          (t.email.that_bai ? ` · LỖI GỬI ${t.email.that_bai}` : "") +
          (t.leo_thang ? ` · leo thang ${t.leo_thang}` : "");
 }

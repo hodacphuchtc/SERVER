@@ -57,6 +57,18 @@ export type LuatTuongQuan = {
   /** Mã phát hiện bị hạ xuống thành bằng chứng phụ khi luật này thắng. */
   nuot: string[];
   tru: TenTru;
+  /**
+   * Các trụ mà luật này được phép vắt qua khi nuốt. Mặc định = CHỈ trụ của chính nó.
+   *
+   * Vì sao cần khai báo tường minh: có những dây chuyền nhân quả thật sự vắt qua nhiều
+   * trụ — đĩa hết chỗ khiến vùng nhớ tạm không nở được, kéo sụp bộ nhớ, rồi mọi tiến
+   * trình xếp hàng chờ ổ đĩa. Cấm tuyệt đối vắt trụ thì hoặc không gộp được ca đó, hoặc
+   * phải gán triệu chứng bộ nhớ vào trụ lưu trữ — tức bóp méo dữ liệu cho vừa luật.
+   *
+   * Khai báo giữ nguyên tác dụng bảo vệ: trụ nào KHÔNG có trong danh sách thì tuyệt đối
+   * không bị nuốt, nên "đĩa đầy" vẫn không thể nuốt "sao lưu thất bại".
+   */
+  tru_duoc_nuot?: TenTru[];
   soan: (f: AnhChup, c: CauHinhPhienDich) => Omit<NhanDinh, "bang_chung" | "do_tin_cay" | "nguon_luat">;
 };
 
@@ -140,6 +152,8 @@ export const LUAT: LuatTuongQuan[] = [
       },
     ],
     nuot: ["swap_cao", "ap_luc_bo_nho", "ram_thap", "tai_cao", "dia_phan_tram", "io_cham"],
+    // Dây chuyền: hết chỗ lưu → vùng nhớ tạm không nở → bộ nhớ cạn → xếp hàng chờ ổ đĩa.
+    tru_duoc_nuot: ["cho_luu_tru", "bo_nho", "bo_xu_ly"],
     soan: (f) => {
       const vm = co(f.dia_vm_dung_gb) ? f.dia_vm_dung_gb : 0;
       return {
@@ -199,7 +213,8 @@ export const LUAT: LuatTuongQuan[] = [
       { ma: "cpu-ranh", kiem: (f) => co(f.cpu_ranh) && f.cpu_ranh >= 40 },
       { ma: "dia-tps-cao", kiem: (f) => co(f.dia_tps) && f.dia_tps >= 3000 },
     ],
-    nuot: ["tai_cao", "cpu_hang_doi"],
+    nuot: ["tai_cao"],   // "cpu_hang_doi" đã bị bỏ: bảng ánh xạ sinh ra mã "tai_cao", khai thêm là mã chết
+    tru_duoc_nuot: ["bo_nho", "bo_xu_ly"],
     soan: (f) => ({
       ma: "doc-nguoc-lien-tuc",
       chi_so: "swap_ra_moi_giay",
@@ -243,6 +258,7 @@ export const LUAT: LuatTuongQuan[] = [
       },
     ],
     nuot: ["tai_cao", "ram_thap", "io_cham", "ap_luc_bo_nho"],
+    tru_duoc_nuot: ["bo_nho", "bo_xu_ly", "cho_luu_tru"],
     soan: (f) => ({
       ma: "bo-nho-thieu-that",
       chi_so: "swap_dung_ty_le",
@@ -324,7 +340,7 @@ export const LUAT: LuatTuongQuan[] = [
     dieu_kien_cung_co: [
       { ma: "tps-cao", kiem: (f) => co(f.dia_tps) && f.dia_tps >= 3000 },
     ],
-    nuot: ["tai_cao", "cpu_hang_doi"],
+    nuot: ["tai_cao"],   // "cpu_hang_doi" đã bị bỏ: bảng ánh xạ sinh ra mã "tai_cao", khai thêm là mã chết
     soan: (f) => ({
       ma: "nghen-nhap-xuat",
       chi_so: "cpu_hang_doi",
@@ -479,14 +495,26 @@ export const LUAT: LuatTuongQuan[] = [
 
 const BAC_TIN_CAY: DoTinCay[] = ["phong_doan", "nhieu_kha_nang", "chac_chan"];
 
-/** Hiệu quả cao trước · rủi ro thấp trước · nhanh trước. Khử trùng theo `ma`. */
+/**
+ * Sắp việc theo HIỆU QUẢ TRÊN MỖI PHÚT CÔNG SỨC, rủi ro thấp phá hoà, nhanh phá hoà tiếp.
+ * Khử trùng theo `ma`.
+ *
+ * 🔴 Vì sao không sắp theo hiệu quả THÔ: đo trên máy thật, cách đó cho ra lời khuyên
+ * "Cân nhắc nâng dung lượng bộ nhớ (~480 phút, cần duyệt chi)" đứng TRƯỚC "Đóng bớt ứng
+ * dụng đang mở (~2 phút)" — chỉ vì nâng bộ nhớ có hiệu quả tuyệt đối lớn hơn. Người đang
+ * xử lý sự cố cần việc làm được NGAY ở đầu danh sách; việc phải duyệt chi nửa ngày thuộc
+ * về cuối. Cả tính năng này sinh ra để trả lời "làm gì TRƯỚC", nên thứ tự chính là sản phẩm.
+ */
 export function xepUuTien(ds: HanhDong[]): HanhDong[] {
   const bac: Record<RuiRo, number> = {
     khong: 0, thap: 1, can_can_nhac: 2, khong_hoan_tac_duoc: 3,
   };
+  // Chia cho số phút (tối thiểu 1) — việc 2 phút thu 3 GB hơn hẳn việc 8 tiếng thu 50 GB
+  // khi máy đang có sự cố.
+  const loi = (h: HanhDong) => (h.hieu_qua_uoc_luong ?? 0) / Math.max(h.phut_uoc_tinh, 1);
   return [...new Map(ds.map((h) => [h.ma, h])).values()].sort(
     (a, b) =>
-      (b.hieu_qua_uoc_luong ?? 0) - (a.hieu_qua_uoc_luong ?? 0) ||
+      loi(b) - loi(a) ||
       bac[a.rui_ro] - bac[b.rui_ro] ||
       a.phut_uoc_tinh - b.phut_uoc_tinh,
   );
@@ -525,8 +553,9 @@ export type KetQuaTuongQuan = {
  *      mà đã gom hết triệu chứng vào một giả thuyết là dẫn người ta đi sai đường.
  *   ③ KHÔNG BAO GIỜ nuốt `mat_lien_lac`. Máy im lặng luôn phải báo riêng — không đo được
  *      KHÁC với khoẻ.
- *   ④ CHỈ nuốt trong CÙNG MỘT TRỤ. "Đĩa đầy" tuyệt đối không được nuốt "sao lưu thất bại"
- *      hay "chứng chỉ hết hạn" dù chúng cùng xảy ra một lúc.
+ *   ④ CHỈ nuốt các TRỤ ĐÃ KHAI BÁO trong `tru_duoc_nuot` (mặc định: chỉ trụ của chính
+ *      luật). "Đĩa đầy" khai vắt qua bộ nhớ và bộ xử lý vì đó là dây chuyền nhân quả thật,
+ *      nhưng KHÔNG khai "sao lưu" — nên nó tuyệt đối không nuốt được "sao lưu thất bại".
  */
 export function chonNguyenNhanGoc(
   f: AnhChup,
@@ -560,7 +589,7 @@ export function chonNguyenNhanGoc(
     thang.nuot.includes(p.ma) &&        // ① khai báo tường minh
     doTinCay !== "phong_doan" &&        // ② phỏng đoán thì không nuốt
     p.ma !== "mat_lien_lac" &&          // ③ không bao giờ nuốt mất liên lạc
-    p.tru === goc.tru;                  // ④ chỉ nuốt trong cùng trụ
+    (thang.tru_duoc_nuot ?? [thang.tru]).includes(p.tru);  // ④ chỉ nuốt trụ ĐÃ KHAI BÁO
 
   const biNuot = phatHien.filter(duocNuot);
   goc.bang_chung = biNuot.map(lamBangChung);
@@ -573,6 +602,11 @@ export function chonNguyenNhanGoc(
   goc.hanh_dong = xepUuTien([...goc.hanh_dong, ...themViec]);
 
   const daNuot = new Set(biNuot.map((b) => b.ma));
+  // 🔴 Khử trùng chính triệu chứng ĐÃ LÀ nguyên nhân gốc. Trước đây so `p.ma !== goc.ma`,
+  // nhưng `goc.ma` là MÃ LUẬT ("bo-nho-thieu-that") còn `p.ma` là MÃ PHÁT HIỆN
+  // ("swap_cao") — hai không gian tên khác nhau nên phép so KHÔNG BAO GIỜ khớp, và
+  // triệu chứng gốc bị in hai lần: một lần làm kết luận, một lần ở "việc khác".
+  const chiSoGoc = goc.chi_so;
   const khac: NhanDinh[] = [
     // Các luật khác trụ vẫn được báo riêng — chúng không phải hệ quả của gốc.
     ...ungVien.slice(1)
@@ -583,7 +617,9 @@ export function chonNguyenNhanGoc(
         bang_chung: [],
         nguon_luat: l.ma,
       })),
-    ...phatHien.filter((p) => !daNuot.has(p.ma) && p.ma !== goc.ma).map(thanhNhanDinh),
+    ...phatHien
+      .filter((p) => !daNuot.has(p.ma) && p.ma !== goc.ma && p.chi_so !== chiSoGoc)
+      .map(thanhNhanDinh),
   ];
 
   return {
